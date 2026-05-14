@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  app:
+    container_name: ql-gplx-be-app
+    build: .
+    ports:
+      - '3100:3100'
+    env_file:
+      - .env
+    restart: unless-stopped
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

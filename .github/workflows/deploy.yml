@@ -1,0 +1,47 @@
+name: Deploy to Servers
+
+on:
+  push:
+    branches:
+      - dev
+
+# Tránh chồng lấn job khi push liên tiếp
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy-dev:
+    name: Deploy DEV (Server khác - SSH user/password)
+    if: github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install sshpass
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y sshpass
+
+      - name: Deploy to PROD via SSH password
+        env:
+          DEV_HOST: 163.61.182.214          # ví dụ: 1.2.3.4
+          DEV_USER: root      # ví dụ: ubuntu
+          DEV_PASS: ${{ secrets.DEV_SSH_PASSWORD }}   # mật khẩu SSH
+        run: |
+          sshpass -p "$DEV_PASS" ssh -o StrictHostKeyChecking=no "$DEV_USER@$DEV_HOST" << 'EOF'
+            set -e
+            cd ~/quanly-gplx-be
+
+            echo "==> Clear Docker rác, images, containers, volumes"
+            sudo docker compose down --remove-orphans || true
+            sudo docker system prune -af || true
+            sudo docker volume prune -f || true
+            sudo docker builder prune -af || true
+
+            git fetch origin dev
+            git checkout -f dev || git checkout -b dev
+            git reset --hard origin/dev
+            sudo docker compose up -d --build
+          EOF

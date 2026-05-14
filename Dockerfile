@@ -14,4 +14,4 @@ COPY . .
 RUN npm run build
 
 # Chạy app
-CMD ["node", "dist/src/main"]
+CMD ["node", "dist/main"]

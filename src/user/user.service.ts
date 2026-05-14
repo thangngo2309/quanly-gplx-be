@@ -42,8 +42,12 @@ export class UserService {
     return await this.userRepository.findOneBy({ user_id: id });
   }
 
-  findByUsername(username: string): Promise<User | null> {
-    return this.userRepository.findOneBy({ username });
+  async findByUsername(username: string): Promise<User | null> {
+    return this.userRepository
+      .createQueryBuilder('user')
+      .addSelect('user.password')
+      .where('user.username = :username', { username })
+      .getOne();
   }
 
   async update(id: number, updateUserDto: UpdateUserDto): Promise<User> {

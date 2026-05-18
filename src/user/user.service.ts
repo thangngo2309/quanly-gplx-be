@@ -56,11 +56,8 @@ export class UserService {
 
     if (!toUpdate) 
       throw new BadRequestException('Không tìm thấy người dùng với ID này');
-    
-    const { password, ...userWithoutPassword } = updateUserDto;
-    if(Object.keys(userWithoutPassword).length <= 0) 
-      throw new BadRequestException('Không có dữ liệu để cập nhật');
-    await this.userRepository.update({ user_id: id }, { ...userWithoutPassword});
+
+    await this.userRepository.update({user_id: id}, updateUserDto);
     return this.userRepository.findOneBy({ user_id: id }) as Promise<User>;
   }
 

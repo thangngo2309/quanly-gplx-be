@@ -47,6 +47,7 @@ export class UserService {
       .createQueryBuilder('user')
       .addSelect('user.password')
       .where('user.username = :username', { username })
+      .andWhere('user.is_active = true')
       .getOne();
   }
 

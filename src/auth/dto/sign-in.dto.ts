@@ -1,9 +1,10 @@
-import { IsNotEmpty, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsNotEmpty, IsString, MaxLength, MinLength, Matches } from 'class-validator';
 
 export class SignInDto {
   @IsString()
   @IsNotEmpty()
   @MinLength(3)
+  @Matches(/^[a-zA-Z0-9_]+$/, { message: 'Username chỉ được chứa chữ cái, số và dấu gạch dưới' })
   @MaxLength(50)
   username: string;
 

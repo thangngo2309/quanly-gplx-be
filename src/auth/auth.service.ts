@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -13,11 +13,11 @@ export class AuthService {
 
   async signIn(username: string, pass: string): Promise<{ access_token: string, refresh_token?: string }> {
     const user = await this.usersService.findByUsername(username);
-    if (!user) throw new UnauthorizedException("Tên đăng nhập hoặc mật khẩu không đúng");
+    if (!user) throw new BadRequestException("Tên đăng nhập hoặc mật khẩu không đúng");
 
     const isMatch = await bcrypt.compare(pass, user.password);
     if (!isMatch) {
-      throw new UnauthorizedException("Tên đăng nhập hoặc mật khẩu không đúng");
+      throw new BadRequestException("Tên đăng nhập hoặc mật khẩu không đúng");
     }
 
     const payload = { sub: user.user_id, username: user.username, fullname: user.fullname, role: user.role };
@@ -44,7 +44,7 @@ export class AuthService {
       });
 
       const user = await this.usersService.findByUsername(payload.username);
-      if (!user) throw new UnauthorizedException("Tên đăng nhập hoặc mật khẩu không đúng");
+      if (!user) throw new BadRequestException("Tên đăng nhập hoặc mật khẩu không đúng");
 
       const newPayload = {
         sub: user.user_id,

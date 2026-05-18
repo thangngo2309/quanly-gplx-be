@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsDate, IsOptional, IsBoolean, IsString, IsNumber } from 'class-validator';
+import { IsNotEmpty, IsDate, IsOptional, IsBoolean, IsString, IsNumber, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateCarDto {
@@ -17,6 +17,7 @@ export class CreateCarDto {
   @IsNotEmpty()
   @IsNumber()
   @Type(() => Number)
+  @Min(1950)
   manufacturingYear: number;
 
   @IsNotEmpty()

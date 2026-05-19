@@ -24,13 +24,13 @@ export class Car {
   hasDualBrake: boolean;
 
   @Column()
-  drivingSchoolLicenseNumber: string;
+  practiceVehicleLicenseNumber: string;
 
   @Column({ type: 'date' })
-  drivingSchoolLicenseIssueDate: Date;
+  practiceVehicleLicenseIssueDate: Date;
 
   @Column({ type: 'date' })
-  drivingSchoolLicenseExpiryDate: Date;
+  practiceVehicleLicenseExpiryDate: Date;
 
   @Column({ type: 'date' })
   inspectionIssueDate: Date;

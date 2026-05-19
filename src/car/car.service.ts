@@ -62,6 +62,19 @@ export class CarService {
       throw new BadRequestException('Không tìm thấy xe');
     }
 
+    const finalLicenseIssueDate = updateCarDto.practiceVehicleLicenseIssueDate ?? existing.practiceVehicleLicenseIssueDate;
+    const finalLicenseExpiryDate = updateCarDto.practiceVehicleLicenseExpiryDate ?? existing.practiceVehicleLicenseExpiryDate;
+
+    if (new Date(finalLicenseIssueDate) > new Date(finalLicenseExpiryDate)) {
+      throw new BadRequestException('Ngày hết hạn giấy phép xe tập lái phải lớn hơn ngày cấp');
+    }
+
+    const finalInspectionIssueDate = updateCarDto.inspectionIssueDate ?? existing.inspectionIssueDate;
+    const finalInspectionExpiryDate = updateCarDto.inspectionExpiryDate ?? existing.inspectionExpiryDate;
+
+    if (new Date(finalInspectionIssueDate) > new Date(finalInspectionExpiryDate)) {
+      throw new BadRequestException('Ngày hết hạn đăng kiểm phải lớn hơn ngày cấp');
+    }
     await this.carRepository.update(id, updateCarDto);
     return this.carRepository.findOne({ where: { car_id: id, isDeleted: false } });
   }

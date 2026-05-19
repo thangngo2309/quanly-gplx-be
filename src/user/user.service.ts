@@ -18,13 +18,15 @@ export class UserService {
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
-    const existing = await this.userRepository
-    .createQueryBuilder('user')
-    .where('user.username = :username', { username: createUserDto.username })
-    .getOne();
+    const existing = await this.userRepository.findOne({
+      where: {
+        username: createUserDto.username,
+        is_deleted: false
+      }
+    });
 
     if (existing) {
-      throw new BadRequestException('Username đã tồn tại');
+      throw new BadRequestException('Không thể tạo với tên đăng nhập này');
     }
 
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
@@ -39,7 +41,11 @@ export class UserService {
   }
 
   async findOne(id: number): Promise<User | null> {
-    return await this.userRepository.findOneBy({ user_id: id });
+    const existing = await this.userRepository.findOne({ where: { user_id: id, is_deleted: false } });
+    if (!existing) {
+      throw new BadRequestException('Không tìm thấy người dùng này');
+    }
+    return existing;
   }
 
   async findByUsername(username: string): Promise<User | null> {
@@ -48,21 +54,31 @@ export class UserService {
       .addSelect('user.password')
       .where('user.username = :username', { username })
       .andWhere('user.is_active = true')
+      .andWhere('user.is_deleted = false')
       .getOne();
   }
 
   async update(id: number, updateUserDto: UpdateUserDto): Promise<User> {
-    const toUpdate = await this.userRepository.findOneBy({ user_id: id });
+    const toUpdate = await this.userRepository.findOne({ where: { user_id: id, is_deleted: false } });
 
     if (!toUpdate) 
-      throw new BadRequestException('Không tìm thấy người dùng với ID này');
+      throw new BadRequestException('Không tìm thấy người dùng này');
 
     await this.userRepository.update({user_id: id}, updateUserDto);
-    return this.userRepository.findOneBy({ user_id: id }) as Promise<User>;
+    return this.userRepository.findOne({ where: { user_id: id, is_deleted: false } }) as Promise<User>;
   }
 
-  remove(id: number): Promise<void> {
-    return this.userRepository.delete({ user_id: id }).then(() => undefined);
+  async remove(id: number) {
+    const existing = await this.userRepository.findOne({
+      where: { user_id: id }
+    });
+
+    if (!existing) {
+      throw new BadRequestException('Không tìm thấy người dùng');
+    }
+
+    await this.userRepository.update({ user_id: id }, { is_deleted: true });
+    return { message: 'Xóa người dùng thành công' };
   }
 
   async findAll(pageInputDto: PageInputDto): Promise<PageDto<User>> {
@@ -71,13 +87,13 @@ export class UserService {
     queryBuilder
       .orderBy('user.user_id', pageInputDto.orderBy)
       .where('user.fullname LIKE :searchName', { searchName: `%${pageInputDto.searchName || ''}%` })
+      .andWhere('user.is_deleted = false')
       .skip(pageInputDto.skip)
       .take(pageInputDto.limit);
 
     const itemCount = await queryBuilder.getCount();
-    const itemTotalCount = await this.userRepository.count();
     const { entities } = await queryBuilder.getRawAndEntities();
-    const pageMetaDto = new PageMetaDto(pageInputDto, itemCount, itemTotalCount);
+    const pageMetaDto = new PageMetaDto(pageInputDto, itemCount);
 
     return new PageDto(entities, pageMetaDto);
   }

@@ -41,11 +41,8 @@ export class CarService {
       .take(pageInputDto.limit);
 
     const itemCount = await queryBuilder.getCount();
-    const itemTotalCount = await this.carRepository.count({
-      where: { isDeleted: false }
-    });
     const { entities } = await queryBuilder.getRawAndEntities();
-    const pageMetaDto = new PageMetaDto(pageInputDto, itemCount, itemTotalCount);
+    const pageMetaDto = new PageMetaDto(pageInputDto, itemCount);
 
     return new PageDto(entities, pageMetaDto);
   }

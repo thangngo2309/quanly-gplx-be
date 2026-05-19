@@ -6,7 +6,7 @@ export class User {
   @PrimaryGeneratedColumn()
   user_id: number;
 
-  @Column({ type: 'varchar', length: 50, unique: true })
+  @Column({ type: 'varchar', length: 50 })
   username: string;
 
   @Column({ select: false, type: 'varchar', length: 200 })
@@ -20,4 +20,7 @@ export class User {
 
   @Column({ type: 'boolean', default: true })
   is_active: boolean;
+
+  @Column({ type: 'boolean', default: false })
+  is_deleted: boolean;
 }

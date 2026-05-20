@@ -2,7 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateCarDto } from './dto/create-car.dto';
 import { UpdateCarDto } from './dto/update-car.dto';
 import { Car } from './entities/car.entity';
-import { Repository } from 'typeorm';
+import { Not, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PageDto } from '../paging/page.dto';
 import { PageMetaDto } from '../paging/page-meta.dto';
@@ -16,16 +16,7 @@ export class CarService {
   ) { }
 
   async create(createCarDto: CreateCarDto) {
-    const existing = await this.carRepository.findOne({
-      where: {
-        registrationNumber: createCarDto.registrationNumber,
-        isDeleted: false
-      }
-    });
-
-    if (existing) {
-      throw new BadRequestException('Xe đã tồn tại');
-    }
+    await this.checkuniquefield(createCarDto);
 
     const car = this.carRepository.create(createCarDto);
     return this.carRepository.save(car);
@@ -62,6 +53,8 @@ export class CarService {
       throw new BadRequestException('Không tìm thấy xe');
     }
 
+    await this.checkuniquefield(updateCarDto, id);
+
     const finalLicenseIssueDate = updateCarDto.practiceVehicleLicenseIssueDate ?? existing.practiceVehicleLicenseIssueDate;
     const finalLicenseExpiryDate = updateCarDto.practiceVehicleLicenseExpiryDate ?? existing.practiceVehicleLicenseExpiryDate;
 
@@ -89,5 +82,23 @@ export class CarService {
     existing.isDeleted = true;
     await this.carRepository.save(existing);
     return { message: 'Xe đã được xóa' };
+  }
+
+  private async checkuniquefield(dto: CreateCarDto | UpdateCarDto, id?: number) {
+    const fields: string[] = ['imeiDat', 'serialNumber', 'registrationNumber'];
+    for (const field of fields) {
+      if (dto[field]) {
+        const existing = await this.carRepository.findOne({
+          where: {
+            [field]: dto[field],
+            isDeleted: false,
+            ...(id ? { car_id: Not(id) } : {})
+          }
+        });
+        if (existing) {
+          throw new BadRequestException(`Giá trị ${field} đã tồn tại`);
+        }
+      }
+    }
   }
 }

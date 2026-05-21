@@ -2,13 +2,15 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
-import { Repository } from 'typeorm';
+import { Not, In, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserRole } from '../enum/user-role';
 import * as bcrypt from 'bcrypt';
 import { PageInputDto } from '../paging/page-input.dto';
 import { PageDto } from '../paging/page.dto';
 import { PageMetaDto } from '../paging/page-meta.dto';
+import { UpdateMultiUserDto } from './dto/update-multi-user.dto';
+import { DeleteMultiUserDto } from './dto/delete-multi-user.dto';
 
 @Injectable()
 export class UserService {
@@ -18,6 +20,7 @@ export class UserService {
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
+    await this.checkuniquefield(createUserDto);
     const existing = await this.userRepository.findOne({
       where: {
         username: createUserDto.username,
@@ -59,12 +62,21 @@ export class UserService {
   }
 
   async update(id: number, updateUserDto: UpdateUserDto): Promise<User> {
-    const toUpdate = await this.userRepository.findOne({ where: { user_id: id, is_deleted: false } });
+    const existing = await this.userRepository.findOne({ where: { user_id: id, is_deleted: false } });
 
-    if (!toUpdate) 
+    if (!existing)
       throw new BadRequestException('Không tìm thấy người dùng này');
 
-    await this.userRepository.update({user_id: id}, updateUserDto);
+    await this.checkuniquefield(updateUserDto, id);
+
+    const finalcontract_signed_date = updateUserDto.contract_signed_date ?? existing.contract_signed_date;
+    const finalcontract_expiry_date = updateUserDto.contract_expiry_date ?? existing.contract_expiry_date;
+
+    if (new Date(finalcontract_signed_date) > new Date(finalcontract_expiry_date)) {
+      throw new BadRequestException('Ngày hết hạn hợp đồng phải lớn hơn ngày ký');
+    }
+
+    await this.userRepository.update({ user_id: id }, updateUserDto);
     return this.userRepository.findOne({ where: { user_id: id, is_deleted: false } }) as Promise<User>;
   }
 
@@ -97,4 +109,73 @@ export class UserService {
 
     return new PageDto(entities, pageMetaDto);
   }
-}
+
+  private async checkuniquefield(dto: CreateUserDto | UpdateUserDto, id?: number) {
+    const fields: string[] = ['username', 'citizen_id', 'teacher_certificate_number', 'health_certificate_number', 'contract_number'];
+    for (const field of fields) {
+      if (dto[field]) {
+        const existing = await this.userRepository.findOne({
+          where: {
+            [field]: dto[field],
+            is_deleted: false,
+            ...(id ? { user_id: Not(id) } : {})
+          }
+        });
+        if (existing) {
+          throw new BadRequestException(`Giá trị ${field} đã tồn tại`);
+        }
+      }
+    }
+  }
+
+  private async findMany(ids: number[]): Promise<User[]> {
+    return this.userRepository.find({
+      where: {
+        user_id: In(ids),
+        is_deleted: false
+      }
+    });
+  }
+
+  async updateMultiple(multiUserDto: UpdateMultiUserDto) {
+    const existingUsers = await this.findMany(multiUserDto.user_ids);
+
+    const updatedIds = existingUsers.map(user => Number(user.user_id));
+    const notFoundIds = multiUserDto.user_ids
+      .map(id => Number(id)).filter(id => !updatedIds.includes(id));
+
+    await this.userRepository.update(
+      { user_id: In(updatedIds) },
+      multiUserDto.data
+    );
+    return {
+      updatedUser: await this.findMany(updatedIds),
+      missingIds: notFoundIds,
+    };
+  }
+
+  async deleteMulti(deleteUserDto: DeleteMultiUserDto) {
+    const existing = await this.userRepository.find({
+      where: {
+        user_id: In(deleteUserDto.user_ids)
+      }
+    });
+
+    const existingIds = existing.map(user => Number(user.user_id));
+    const notFoundIds = deleteUserDto.user_ids
+      .map(id => Number(id))
+      .filter(id => !existingIds.includes(id));
+
+    if (existingIds.length > 0) {
+      await this.userRepository.update(
+        { user_id: In(existingIds) },
+        { is_deleted: true },
+      );
+    }
+
+    return {
+      deletedIds: existingIds,
+      missingIds: notFoundIds,
+    };
+  }
+} 

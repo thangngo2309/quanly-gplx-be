@@ -5,6 +5,8 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { PageInputDto } from '../paging/page-input.dto';
 import { PageDto } from '../paging/page.dto';
 import { User } from './entities/user.entity';
+import { UpdateMultiUserDto } from './dto/update-multi-user.dto';
+import { DeleteMultiUserDto } from './dto/delete-multi-user.dto';
 
 @Controller('user')
 export class UserController {
@@ -34,4 +36,14 @@ export class UserController {
   remove(@Param('id') id: string) {
     return this.userService.remove(+id);
   }
+
+  @Post('update-multiple')
+  updateMultiple(@Body() multiUserDto: UpdateMultiUserDto) {
+    return this.userService.updateMultiple(multiUserDto);
+  }
+
+  @Post('delete-multiple')
+  deleteMulti(@Body() deleteUserDto: DeleteMultiUserDto) {
+    return this.userService.deleteMulti(deleteUserDto);
+    }
 }

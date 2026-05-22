@@ -1,6 +1,7 @@
 import { IsBoolean, IsDateString, IsEnum, IsOptional, IsString, MaxLength } from "class-validator";
 import { TeachingSubject } from "../../enum/teaching-subject.enum";
 import { RecruitmentType } from "../../enum/recruitment_type.enum";
+import { ExpiryDate } from "../../decorator/expirydate.decorator";
 
 export class MultiDataDto {
     @IsOptional()
@@ -56,4 +57,9 @@ export class MultiDataDto {
     @IsOptional()
     @IsDateString()
     contract_signed_date?: Date;
+
+    @IsOptional()
+    @IsDateString()
+    @ExpiryDate('contract_signed_date')
+    contract_expiry_date?: Date;
 }

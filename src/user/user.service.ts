@@ -144,6 +144,13 @@ export class UserService {
     const notFoundIds = multiUserDto.user_ids
       .map(id => Number(id)).filter(id => !updatedIds.includes(id));
 
+    const finalcontract_signed_date = multiUserDto.data.contract_signed_date || existingUsers[0]?.contract_signed_date;
+    const finalcontract_expiry_date = multiUserDto.data.contract_expiry_date || existingUsers[0]?.contract_expiry_date;
+
+    if (new Date(finalcontract_signed_date) > new Date(finalcontract_expiry_date)) {
+      throw new BadRequestException('Ngày hết hạn hợp đồng phải lớn hơn ngày ký');
+    }
+
     await this.userRepository.update(
       { user_id: In(updatedIds) },
       multiUserDto.data

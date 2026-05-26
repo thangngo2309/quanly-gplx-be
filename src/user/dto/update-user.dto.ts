@@ -1,4 +1,4 @@
-import { IsDateString, IsEnum, IsOptional, IsString, Matches, MaxLength } from "class-validator";
+import { IsDateString, IsEnum, IsNotEmpty, IsOptional, IsString, Matches, MaxLength } from "class-validator";
 import { RecruitmentType } from "../../enum/recruitment_type.enum";
 import { TeachingSubject } from "../../enum/teaching-subject.enum";
 import { ExpiryDate } from "../../decorator/expirydate.decorator";
@@ -6,6 +6,7 @@ export class UpdateUserDto {
     @IsOptional()
     @IsString()
     @MaxLength(100)
+    @IsNotEmpty({ message: 'Nếu cập nhật tên, không được gửi chuỗi rỗng' })
     fullname?: string;
 
     @IsOptional()
@@ -20,6 +21,7 @@ export class UpdateUserDto {
     @IsOptional()
     @IsString()
     @MaxLength(255)
+    @IsNotEmpty({ message: 'Nếu cập nhật địa chỉ, không được gửi chuỗi rỗng' })
     address?: string;
 
     @IsOptional()

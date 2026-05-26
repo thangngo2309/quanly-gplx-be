@@ -93,13 +93,40 @@ export class UserService {
     return { message: 'Xóa người dùng thành công' };
   }
 
-  async findAll(pageInputDto: PageInputDto): Promise<PageDto<User>> {
-    const queryBuilder = this.userRepository.createQueryBuilder('user');
+  async findAll(pageInputDto: PageInputDto) {
+    const queryBuilder =
+      this.userRepository.createQueryBuilder('user');
+
+     const conditions: { condition: string; params: object }[] = [
+      !!pageInputDto.name && {
+        condition: 'user.fullname LIKE :name',
+        params: { name: `%${pageInputDto.name}%`,},
+      },
+      !!pageInputDto.cccd && {
+        condition: 'user.citizen_id LIKE :cccd',
+        params: { cccd: `%${pageInputDto.cccd}%` },
+      },
+      typeof pageInputDto.active === 'boolean' && {
+        condition: 'user.is_active = :active',
+        params: { active: pageInputDto.active },
+      }
+    ].filter(Boolean) as { condition: string; params: object }[];
+
+    queryBuilder.where(
+      'user.is_deleted = false'
+    );
+    conditions.forEach((item) => {
+      queryBuilder.andWhere(
+        item.condition,
+        item.params
+      );
+    });
 
     queryBuilder
-      .orderBy('user.user_id', pageInputDto.orderBy)
-      .where('user.fullname LIKE :searchName', { searchName: `%${pageInputDto.searchName || ''}%` })
-      .andWhere('user.is_deleted = false')
+      .orderBy(
+        'user.user_id',
+        pageInputDto.orderBy
+      )
       .skip(pageInputDto.skip)
       .take(pageInputDto.limit);
 

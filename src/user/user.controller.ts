@@ -17,8 +17,8 @@ export class UserController {
     return this.userService.create(createUserDto);
   }
 
-  @Get()
-  findAll(@Query() PageInputDto: PageInputDto): Promise<PageDto<User>> {
+  @Post('/search')
+  findAll(@Body() PageInputDto: PageInputDto) {
     return this.userService.findAll(PageInputDto);
   }
 

@@ -1,4 +1,4 @@
-import { IsBoolean, IsDateString, IsEnum, IsOptional, IsString, MaxLength } from "class-validator";
+import { IsBoolean, IsDateString, IsEnum, IsNotEmpty, IsOptional, IsString, MaxLength } from "class-validator";
 import { TeachingSubject } from "../../enum/teaching-subject.enum";
 import { RecruitmentType } from "../../enum/recruitment_type.enum";
 import { ExpiryDate } from "../../decorator/expirydate.decorator";
@@ -7,6 +7,7 @@ export class MultiDataDto {
     @IsOptional()
     @IsString()
     @MaxLength(100)
+    @IsNotEmpty({ message: 'Nếu cập nhật tên, không được gửi chuỗi rỗng' })
     fullname?: string;
 
     @IsOptional()
@@ -16,6 +17,7 @@ export class MultiDataDto {
     @IsOptional()
     @IsString()
     @MaxLength(255)
+    @IsNotEmpty({ message: 'Nếu cập nhật địa chỉ, không được gửi chuỗi rỗng' })
     address?: string;
 
     @IsOptional()

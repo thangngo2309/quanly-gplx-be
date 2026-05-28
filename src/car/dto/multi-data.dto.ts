@@ -1,0 +1,62 @@
+import { IsBoolean, IsDate, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Min } from "class-validator";
+import { Type } from "class-transformer";
+import { ExpiryDate } from "../../decorator/expirydate.decorator";
+import { CarCategory } from "../../enum/car-category.enum";
+
+export class MultiDataDto {
+  @IsOptional()
+  @IsNotEmpty()
+  @IsString()
+  brand?: string;
+
+  @IsOptional()
+  @IsEnum(CarCategory)
+  category?: CarCategory;
+
+  @IsOptional()
+  @IsNotEmpty()
+  @IsNumber()
+  @Type(() => Number)
+  @Min(2000)
+  manufacturingYear?: number;
+
+  @IsOptional()
+  @IsNotEmpty()
+  @IsString()
+  owner?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  hasDualBrake?: boolean;
+
+  @IsOptional()
+  @IsDate()
+  @Type(() => Date)
+  practiceVehicleLicenseIssueDate?: Date;
+
+  @IsOptional()
+  @IsDate()
+  @Type(() => Date)
+  @ExpiryDate('practiceVehicleLicenseIssueDate')
+  practiceVehicleLicenseExpiryDate?: Date;
+
+  @IsOptional()
+  @IsDate()
+  @Type(() => Date)
+  inspectionIssueDate?: Date;
+
+  @IsOptional()
+  @IsDate()
+  @Type(() => Date)
+  @ExpiryDate('inspectionIssueDate')
+  inspectionExpiryDate?: Date;
+
+  @IsOptional()
+  @IsDate()
+  @Type(() => Date)
+  insuranceExpiryDate?: Date;
+
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
+}

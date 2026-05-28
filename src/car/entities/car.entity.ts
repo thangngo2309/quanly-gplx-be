@@ -1,4 +1,5 @@
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { CarCategory } from '../../enum/car-category.enum';
 
 @Entity('car')
 export class Car {
@@ -11,8 +12,8 @@ export class Car {
   @Column()
   brand: string;
 
-  @Column()
-  category: string;
+  @Column({ type: 'enum', enum: CarCategory, default: CarCategory.A })
+  category: CarCategory;
 
   @Column()
   manufacturingYear: number;

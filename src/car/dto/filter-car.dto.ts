@@ -1,0 +1,15 @@
+import { IsBoolean, IsOptional, IsString } from "class-validator";
+
+export class CarFilterDto {
+  @IsString()
+  @IsOptional()
+  readonly registrationNumber?: string;
+
+  @IsString()
+  @IsOptional()
+  readonly imeiDat?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  readonly active?: boolean;
+}

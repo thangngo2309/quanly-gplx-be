@@ -2,11 +2,14 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateCarDto } from './dto/create-car.dto';
 import { UpdateCarDto } from './dto/update-car.dto';
 import { Car } from './entities/car.entity';
-import { Not, Repository } from 'typeorm';
+import { In, Not, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PageDto } from '../paging/page.dto';
 import { PageMetaDto } from '../paging/page-meta.dto';
 import { PageInputDto } from '../paging/page-input.dto';
+import { DeleteMultiCarDto } from './dto/delete-multi-car.dto';
+import { UpdateMultiCarDto } from './dto/update-multi-car.dto';
+import { CarFilterDto } from './dto/filter-car.dto';
 
 @Injectable()
 export class CarService {
@@ -22,12 +25,35 @@ export class CarService {
     return this.carRepository.save(car);
   }
 
-  async findAll(pageInputDto: PageInputDto): Promise<PageDto<Car>> {
+  async findAll(pageInputDto: PageInputDto, filterDto: CarFilterDto) {
     const queryBuilder = this.carRepository.createQueryBuilder('car');
 
-    queryBuilder
-      .where('car.isDeleted = false')
-      .orderBy('car.car_id', pageInputDto.orderBy)
+    const conditions: { condition: string; params: object }[] = [
+      !!filterDto.registrationNumber && {
+        condition: 'car.registrationNumber LIKE :registrationNumber',
+        params: { registrationNumber: `%${filterDto.registrationNumber}%` },
+      },
+      !!filterDto.imeiDat && {
+        condition: 'car.imeiDat LIKE :imeiDat',
+        params: { imeiDat: `%${filterDto.imeiDat}%` },
+      },
+      typeof filterDto.active === 'boolean' && {
+        condition: 'car.isActive = :active',
+        params: { active: filterDto.active },
+      }
+    ].filter(Boolean) as { condition: string; params: object }[];
+
+    queryBuilder.where(
+      'car.isDeleted = false'
+    );
+    conditions.forEach((item) => {
+      queryBuilder.andWhere(
+        item.condition,
+        item.params
+      );
+    });
+
+    queryBuilder.orderBy('car.car_id', pageInputDto.orderBy)
       .skip(pageInputDto.skip)
       .take(pageInputDto.limit);
 
@@ -84,7 +110,7 @@ export class CarService {
     return { message: 'Xe đã được xóa' };
   }
 
-  private async checkuniquefield(dto: CreateCarDto | UpdateCarDto, id?: number) {
+  async checkuniquefield(dto: CreateCarDto | UpdateCarDto, id?: number) {
     const fields: string[] = ['imeiDat', 'serialNumber', 'registrationNumber'];
     for (const field of fields) {
       if (dto[field]) {
@@ -100,5 +126,86 @@ export class CarService {
         }
       }
     }
+  }
+
+  async deleteMulti(deleteCarDto: DeleteMultiCarDto) {
+    const existing = await this.carRepository.find({
+      where: {
+        car_id: In(deleteCarDto.car_ids)
+      }
+    });
+
+    const existingIds = existing.map(car => Number(car.car_id));
+    const notFoundIds = deleteCarDto.car_ids
+      .map(id => Number(id))
+      .filter(id => !existingIds.includes(id));
+
+    if (existingIds.length > 0) {
+      await this.carRepository.update(
+        { car_id: In(existingIds) },
+        { isDeleted: true },
+      );
+    }
+
+    return {
+      deletedIds: existingIds,
+      missingIds: notFoundIds,
+    };
+  }
+
+  async updateMultiple(multiCarDto: UpdateMultiCarDto) {
+    const existingCars = await this.findMany(multiCarDto.car_ids);
+
+    const updatedIds = existingCars.map(car => Number(car.car_id));
+    const notFoundIds = multiCarDto.car_ids
+      .map(id => Number(id)).filter(id => !updatedIds.includes(id));
+
+    const errors: string[] = [];
+    const validCarIds: number[] = [];
+
+    for (const existingCar of existingCars) {
+      const final_inspection_issue_date = multiCarDto.data.inspectionIssueDate || existingCar.inspectionIssueDate;
+      const final_inspection_expiry_date = multiCarDto.data.inspectionExpiryDate || existingCar.inspectionExpiryDate;
+      const final_practice_vehicle_license_issue_date = multiCarDto.data.practiceVehicleLicenseIssueDate || existingCar.practiceVehicleLicenseIssueDate;
+      const final_practice_vehicle_license_expiry_date = multiCarDto.data.practiceVehicleLicenseExpiryDate || existingCar.practiceVehicleLicenseExpiryDate;
+
+      let hasError = false;
+
+      if (new Date(final_practice_vehicle_license_issue_date) > new Date(final_practice_vehicle_license_expiry_date)) {
+        errors.push(`Xe ${existingCar.registrationNumber}: Ngày hết hạn giấy phép xe tập lái phải lớn hơn ngày cấp`);
+        hasError = true;
+      }
+
+      if (new Date(final_inspection_issue_date) > new Date(final_inspection_expiry_date)) {
+        errors.push(`Xe ${existingCar.registrationNumber}: Ngày hết hạn đăng kiểm phải lớn hơn ngày cấp`);
+        hasError = true;
+      }
+
+      if (!hasError) {
+        validCarIds.push(Number(existingCar.car_id));
+      }
+    }
+
+    if (validCarIds.length > 0) {
+      await this.carRepository.update(
+        { car_id: In(validCarIds) },
+        multiCarDto.data
+      );
+    }
+
+    return {
+      updatedCar: validCarIds.length > 0 ? await this.findMany(validCarIds) : [],
+      missingIds: notFoundIds,
+      errors: errors.length > 0 ? errors : undefined,
+    };
+  }
+
+  private async findMany(ids: number[]): Promise<Car[]> {
+    return this.carRepository.find({
+      where: {
+        car_id: In(ids),
+        isDeleted: false
+      }
+    });
   }
 }

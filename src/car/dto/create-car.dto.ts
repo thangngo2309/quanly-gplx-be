@@ -1,7 +1,8 @@
-import { IsNotEmpty, IsDate, IsBoolean, IsString, IsNumber, Min, Matches } from 'class-validator';
+import { IsNotEmpty, IsDate, IsBoolean, IsString, IsNumber, Min, Matches, IsEnum } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ExpiryDate } from '../../decorator/expirydate.decorator';
 import { IsValidRegistrationNumber } from '../../decorator/valid-registration-number.decorator';
+import { CarCategory } from '../../enum/car-category.enum';
 
 export class CreateCarDto {
   @IsNotEmpty()
@@ -14,8 +15,8 @@ export class CreateCarDto {
   brand: string;
 
   @IsNotEmpty()
-  @IsString()
-  category: string;
+  @IsEnum(CarCategory)
+  category: CarCategory;
 
   @IsNotEmpty()
   @IsNumber()

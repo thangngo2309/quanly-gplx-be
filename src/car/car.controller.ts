@@ -5,19 +5,32 @@ import { UpdateCarDto } from './dto/update-car.dto';
 import { Car } from './entities/car.entity';
 import { PageDto } from '../paging/page.dto';
 import { PageInputDto } from '../paging/page-input.dto';
+import { CarFilterDto } from './dto/filter-car.dto';
+import { DeleteMultiCarDto } from './dto/delete-multi-car.dto';
+import { UpdateMultiCarDto } from './dto/update-multi-car.dto';
 
 @Controller('car')
 export class CarController {
-  constructor(private readonly carService: CarService) {}
+  constructor(private readonly carService: CarService) { }
 
   @Post()
   create(@Body() createCarDto: CreateCarDto) {
     return this.carService.create(createCarDto);
   }
 
-  @Get()
-  findAll(@Query() pageInputDto: PageInputDto): Promise<PageDto<Car>> {
-      return this.carService.findAll(pageInputDto);
+  @Post('/find-all')
+  findAll(@Query() pageInputDto: PageInputDto, @Body() filterDto: CarFilterDto): Promise<PageDto<Car>> {
+    return this.carService.findAll(pageInputDto, filterDto);
+  }
+
+  @Post('update-multiple')
+  updateMultiple(@Body() updateMultiCarDtos: UpdateMultiCarDto) {
+    return this.carService.updateMultiple(updateMultiCarDtos);
+  }
+
+  @Post('delete-multiple')
+  deleteMultiple(@Body() deleteMultiCarDto: DeleteMultiCarDto) {
+    return this.carService.deleteMulti(deleteMultiCarDto);
   }
 
   @Get(':id')

@@ -53,7 +53,7 @@ export class CarService {
       );
     });
 
-    queryBuilder.orderBy('car.car_id', pageInputDto.orderBy)
+    queryBuilder.orderBy('car.car_id', filterDto.sortDirection || 'ASC')
       .skip(pageInputDto.skip)
       .take(pageInputDto.limit);
 

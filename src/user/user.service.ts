@@ -11,6 +11,7 @@ import { PageDto } from '../paging/page.dto';
 import { PageMetaDto } from '../paging/page-meta.dto';
 import { UpdateMultiUserDto } from './dto/update-multi-user.dto';
 import { DeleteMultiUserDto } from './dto/delete-multi-user.dto';
+import { FilterUserDto } from './dto/filter-user.dto';
 
 @Injectable()
 export class UserService {
@@ -93,22 +94,22 @@ export class UserService {
     return { message: 'Xóa người dùng thành công' };
   }
 
-  async findAll(pageInputDto: PageInputDto) {
+  async findAll(pageInputDto: PageInputDto, filterDto: FilterUserDto) {
     const queryBuilder =
       this.userRepository.createQueryBuilder('user');
 
      const conditions: { condition: string; params: object }[] = [
-      !!pageInputDto.name && {
+      !!filterDto.name && {
         condition: 'user.fullname LIKE :name',
-        params: { name: `%${pageInputDto.name}%`,},
+        params: { name: `%${filterDto.name}%`,},
       },
-      !!pageInputDto.cccd && {
+      !!filterDto.cccd && {
         condition: 'user.citizen_id LIKE :cccd',
-        params: { cccd: `%${pageInputDto.cccd}%` },
+        params: { cccd: `%${filterDto.cccd}%` },
       },
-      typeof pageInputDto.active === 'boolean' && {
+      typeof filterDto.active === 'boolean' && {
         condition: 'user.is_active = :active',
-        params: { active: pageInputDto.active },
+        params: { active: filterDto.active },
       }
     ].filter(Boolean) as { condition: string; params: object }[];
 
@@ -123,10 +124,7 @@ export class UserService {
     });
 
     queryBuilder
-      .orderBy(
-        'user.user_id',
-        pageInputDto.orderBy
-      )
+      .orderBy(filterDto.sortBy || 'user.user_id', filterDto.sortDirection || 'ASC')
       .skip(pageInputDto.skip)
       .take(pageInputDto.limit);
 

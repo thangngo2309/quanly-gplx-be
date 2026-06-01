@@ -2,6 +2,7 @@ import { IsDateString, IsEnum, IsNotEmpty, IsOptional, IsString, Matches, MaxLen
 import { RecruitmentType } from "../../enum/recruitment_type.enum";
 import { TeachingSubject } from "../../enum/teaching-subject.enum";
 import { ExpiryDate } from "../../decorator/expirydate.decorator";
+import { UserPedagogyLevel } from "../../enum/user-pedagogy-level.enum";
 export class UpdateUserDto {
     @IsOptional()
     @IsString()
@@ -39,9 +40,8 @@ export class UpdateUserDto {
     professional_level?: string;
 
     @IsOptional()
-    @IsString()
-    @MaxLength(255)
-    pedagogy_level?: string;
+    @IsEnum(UserPedagogyLevel)
+    pedagogy_level?: UserPedagogyLevel;
 
     @IsOptional()
     @IsEnum(TeachingSubject)

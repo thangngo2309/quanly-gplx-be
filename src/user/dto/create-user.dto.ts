@@ -13,6 +13,7 @@ import { UserRole } from '../../enum/user-role';
 import { RecruitmentType } from '../../enum/recruitment_type.enum';
 import { TeachingSubject } from '../../enum/teaching-subject.enum';
 import {ExpiryDate} from '../../decorator/expirydate.decorator';
+import { UserPedagogyLevel } from '../../enum/user-pedagogy-level.enum';
 
 export class CreateUserDto {
   @IsString()
@@ -65,9 +66,8 @@ export class CreateUserDto {
   professional_level?: string;
 
   @IsOptional()
-  @IsString()
-  @MaxLength(255)
-  pedagogy_level?: string;
+  @IsEnum(UserPedagogyLevel)
+  pedagogy_level?: UserPedagogyLevel;
 
   @IsOptional()
   @IsEnum(TeachingSubject)

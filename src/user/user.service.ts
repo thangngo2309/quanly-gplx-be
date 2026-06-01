@@ -210,4 +210,59 @@ export class UserService {
       missingIds: notFoundIds,
     };
   }
+
+  async uniqueUsername(username: string, id?: number): Promise<{ isUnique: boolean }> {
+    const existing = await this.userRepository.findOne({
+      where: {
+        username,
+        is_deleted: false,
+        ...(id ? { user_id: Not(id) } : {})
+      }
+    });
+    return { isUnique: !existing };
+  }
+
+  async uniqueCitizenId(citizen_id: string, id?: number): Promise<{ isUnique: boolean }> {
+    const existing = await this.userRepository.findOne({
+      where: {
+        citizen_id,
+        is_deleted: false,
+        ...(id ? { user_id: Not(id) } : {})
+      }
+    });
+    return { isUnique: !existing };
+  }
+
+  async uniqueTeacherCertificateNumber(teacher_certificate_number: string, id?: number): Promise<{ isUnique: boolean }> {
+    const existing = await this.userRepository.findOne({
+      where: {
+        teacher_certificate_number,
+        is_deleted: false,
+        ...(id ? { user_id: Not(id) } : {})
+      }
+    });
+    return { isUnique: !existing };
+  }
+
+  async uniqueHealthCertificateNumber(health_certificate_number: string, id?: number): Promise<{ isUnique: boolean }> {
+    const existing = await this.userRepository.findOne({
+      where: {
+        health_certificate_number,
+        is_deleted: false,
+        ...(id ? { user_id: Not(id) } : {})
+      }
+    });
+    return { isUnique: !existing };
+  }
+
+  async uniqueContractNumber(contract_number: string, id?: number): Promise<{ isUnique: boolean }> {
+    const existing = await this.userRepository.findOne({
+      where: {
+        contract_number,
+        is_deleted: false,
+        ...(id ? { user_id: Not(id) } : {})
+      }
+    });
+    return { isUnique: !existing };
+  }
 } 

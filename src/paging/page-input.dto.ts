@@ -1,9 +1,7 @@
 import { IsInt, IsOptional, Max, Min } from "class-validator";
 import { Type } from "class-transformer";
-import { SearchDto }from "./search.dto";
 
-export class PageInputDto extends SearchDto {
-
+export class PageInputDto {
     @Type(() => Number)
     @IsInt()
     @Min(1)

@@ -7,6 +7,7 @@ import { PageDto } from '../paging/page.dto';
 import { User } from './entities/user.entity';
 import { UpdateMultiUserDto } from './dto/update-multi-user.dto';
 import { DeleteMultiUserDto } from './dto/delete-multi-user.dto';
+import { FilterUserDto } from './dto/filter-user.dto';
 
 @Controller('user')
 export class UserController {
@@ -17,11 +18,11 @@ export class UserController {
     return this.userService.create(createUserDto);
   }
 
-  @Post('/search')
-  findAll(@Body() PageInputDto: PageInputDto) {
-    return this.userService.findAll(PageInputDto);
+  @Post('/find-all')
+  findAll(@Query() pageInputDto: PageInputDto, @Body() filterDto: FilterUserDto): Promise<PageDto<User>> {
+    return this.userService.findAll(pageInputDto, filterDto);
   }
-
+  
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.userService.findOne(+id);

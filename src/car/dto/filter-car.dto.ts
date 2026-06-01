@@ -12,4 +12,8 @@ export class CarFilterDto {
   @IsBoolean()
   @IsOptional()
   readonly active?: boolean;
+
+  @IsString()
+  @IsOptional()
+  readonly sortDirection?: 'ASC' | 'DESC';
 }

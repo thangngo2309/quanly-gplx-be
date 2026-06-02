@@ -22,7 +22,32 @@ export class UserController {
   findAll(@Query() pageInputDto: PageInputDto, @Body() filterDto: FilterUserDto): Promise<PageDto<User>> {
     return this.userService.findAll(pageInputDto, filterDto);
   }
-  
+
+  @Post('/unique-username')
+  uniqueUsername(@Body('username') username: string, @Body('id') id?: number) {
+    return this.userService.uniqueUsername(username, id);
+  }
+
+  @Post('/unique-citizen-id')
+  uniqueCitizenId(@Body('citizen_id') citizen_id: string, @Body('id') id?: number) {
+    return this.userService.uniqueCitizenId(citizen_id, id);
+  }
+
+  @Post('/unique-teacher-certificate-number')
+  uniqueTeacherCertificateNumber(@Body('teacher_certificate_number') teacher_certificate_number: string, @Body('id') id?: number) {
+    return this.userService.uniqueTeacherCertificateNumber(teacher_certificate_number, id);
+  }
+
+  @Post('/unique-health-certificate-number')
+  uniqueHealthCertificateNumber(@Body('health_certificate_number') health_certificate_number: string, @Body('id') id?: number) {
+    return this.userService.uniqueHealthCertificateNumber(health_certificate_number, id);
+  }
+
+  @Post('/unique-contract-number')
+  uniqueContractNumber(@Body('contract_number') contract_number: string, @Body('id') id?: number) {
+    return this.userService.uniqueContractNumber(contract_number, id);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.userService.findOne(+id);

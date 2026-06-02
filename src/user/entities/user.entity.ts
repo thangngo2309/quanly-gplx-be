@@ -2,6 +2,7 @@ import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateCol
 import { UserRole } from '../../enum/user-role';
 import { TeachingSubject } from "../../enum/teaching-subject.enum";
 import { RecruitmentType } from "../../enum/recruitment_type.enum";
+import { UserPedagogyLevel } from "../../enum/user-pedagogy-level.enum";
 
 @Entity('user')
 export class User {
@@ -32,8 +33,8 @@ export class User {
   @Column({ type: 'varchar', length: 255, nullable: true })
   professional_level: string;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  pedagogy_level: string;
+  @Column({ type: 'enum', enum: UserPedagogyLevel, nullable: true })
+  pedagogy_level: UserPedagogyLevel;
 
   @Column({ type: 'enum', enum: TeachingSubject, nullable: true })
   teaching_subject: TeachingSubject;

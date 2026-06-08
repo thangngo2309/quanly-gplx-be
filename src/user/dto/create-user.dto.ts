@@ -1,10 +1,12 @@
 import {
+  IsDate,
   IsDateString,
   IsEnum,
   IsNotEmpty,
   IsOptional,
   IsString,
   Matches,
+  MaxDate,
   MaxLength,
   MinLength,
 } from 'class-validator';
@@ -12,8 +14,9 @@ import {
 import { UserRole } from '../../enum/user-role';
 import { RecruitmentType } from '../../enum/recruitment_type.enum';
 import { TeachingSubject } from '../../enum/teaching-subject.enum';
-import {ExpiryDate} from '../../decorator/expirydate.decorator';
+import { ExpiryDate } from '../../decorator/expirydate.decorator';
 import { UserPedagogyLevel } from '../../enum/user-pedagogy-level.enum';
+import { Type } from 'class-transformer';
 
 export class CreateUserDto {
   @IsString()
@@ -34,12 +37,23 @@ export class CreateUserDto {
   fullname: string;
 
   @IsNotEmpty()
-  @IsDateString()
+  @Type(() => Date)
+  @IsDate()
+  @MaxDate(
+    () => {
+      const date = new Date();
+      date.setFullYear(date.getFullYear() - 18);
+      return date;
+    },
+    {
+      message: () => `Người dùng phải đủ 18 tuổi`,
+    },
+  )
   date_of_birth: Date;
 
   @IsNotEmpty()
   @IsString()
-  @Matches(/^[0-9]{12}$/, {message: 'CCCD phải gồm 12 số'})
+  @Matches(/^[0-9]{12}$/, { message: 'CCCD phải gồm 12 số' })
   citizen_id: string;
 
   @IsNotEmpty()
@@ -80,7 +94,12 @@ export class CreateUserDto {
   teacher_certificate_number?: string;
 
   @IsOptional()
-  @IsDateString()
+  @Type(() => Date)
+  @IsDate()
+  @MaxDate(() => new Date(), {
+    message: () =>
+      `Ngày cấp giấy chứng nhận giáo viên không được là ngày trong tương lai`,
+  })
   teacher_certificate_issue_date?: Date;
 
   @IsOptional()
@@ -105,7 +124,12 @@ export class CreateUserDto {
   contract_number?: string;
 
   @IsOptional()
-  @IsDateString()
+  @Type(() => Date)
+  @IsDate()
+  @MaxDate(() => new Date(), {
+    message: () =>
+      `Ngày ký hợp đồng không được là ngày trong tương lai`,
+  })
   contract_signed_date?: Date;
 
   @IsOptional()

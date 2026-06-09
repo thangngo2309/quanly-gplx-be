@@ -18,7 +18,7 @@ export class UserService {
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
-  ) {}
+  ) { }
 
   async create(createUserDto: CreateUserDto): Promise<User> {
     await this.checkuniquefield(createUserDto);
@@ -98,10 +98,10 @@ export class UserService {
     const queryBuilder =
       this.userRepository.createQueryBuilder('user');
 
-     const conditions: { condition: string; params: object }[] = [
+    const conditions: { condition: string; params: object }[] = [
       !!filterDto.name && {
         condition: 'user.fullname LIKE :name',
-        params: { name: `%${filterDto.name}%`,},
+        params: { name: `%${filterDto.name}%`, },
       },
       !!filterDto.cccd && {
         condition: 'user.citizen_id LIKE :cccd',
@@ -169,20 +169,36 @@ export class UserService {
     const notFoundIds = multiUserDto.user_ids
       .map(id => Number(id)).filter(id => !updatedIds.includes(id));
 
-    const finalcontract_signed_date = multiUserDto.data.contract_signed_date || existingUsers[0]?.contract_signed_date;
-    const finalcontract_expiry_date = multiUserDto.data.contract_expiry_date || existingUsers[0]?.contract_expiry_date;
+    const errors: string[] = [];
+    const validUserIds: number[] = [];
 
-    if (new Date(finalcontract_signed_date) > new Date(finalcontract_expiry_date)) {
-      throw new BadRequestException('Ngày hết hạn hợp đồng phải lớn hơn ngày ký');
+    for (const existingUser of existingUsers) {
+      const finalcontract_signed_date = multiUserDto.data.contract_signed_date || existingUser.contract_signed_date;
+      const finalcontract_expiry_date = multiUserDto.data.contract_expiry_date || existingUser.contract_expiry_date;
+
+      let hasError = false;
+
+      if (new Date(finalcontract_signed_date) > new Date(finalcontract_expiry_date)) {
+        errors.push(`Người dùng ${existingUser.fullname} có ngày ký hợp đồng lớn hơn ngày hết hạn`);
+        hasError = true;
+      }
+
+      if (!hasError) {
+        validUserIds.push(existingUser.user_id);
+      }
     }
 
-    await this.userRepository.update(
-      { user_id: In(updatedIds) },
-      multiUserDto.data
-    );
+    if (validUserIds.length > 0) {
+      await this.userRepository.update(
+        { user_id: In(validUserIds) },
+        multiUserDto.data
+      );
+    }
+
     return {
-      updatedUser: await this.findMany(updatedIds),
+      updatedUser: validUserIds.length > 0 ? await this.findMany(validUserIds) : [],
       missingIds: notFoundIds,
+      errors: errors.length > 0 ? errors : undefined,
     };
   }
 

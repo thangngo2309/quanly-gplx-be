@@ -122,15 +122,26 @@ export class UserService {
         item.params
       );
     });
+    queryBuilder.orderBy(filterDto.sortBy || 'user.user_id', filterDto.sortDirection || 'ASC');
 
-    queryBuilder
-      .orderBy(filterDto.sortBy || 'user.user_id', filterDto.sortDirection || 'ASC')
-      .skip(pageInputDto.skip)
-      .take(pageInputDto.limit);
+    let entities: User[];
+    let pageMetaDto: PageMetaDto;
 
-    const itemCount = await queryBuilder.getCount();
-    const { entities } = await queryBuilder.getRawAndEntities();
-    const pageMetaDto = new PageMetaDto(pageInputDto, itemCount);
+    const validPaging = !!pageInputDto.page && !!pageInputDto.limit;
+
+    if (validPaging) {
+      const page = pageInputDto.page;
+      const limit = pageInputDto.limit;
+      queryBuilder.skip((page - 1) * limit).take(limit);
+      const itemCount = await queryBuilder.getCount();
+      const result = await queryBuilder.getRawAndEntities();
+      entities = result.entities;
+      pageMetaDto = new PageMetaDto(pageInputDto, itemCount);
+    } else {
+      const result = await queryBuilder.getRawAndEntities();
+      entities = result.entities;
+      pageMetaDto = new PageMetaDto(new PageInputDto(), entities.length);
+    }
 
     return new PageDto(entities, pageMetaDto);
   }

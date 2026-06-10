@@ -52,14 +52,26 @@ export class CarService {
         item.params
       );
     });
+    queryBuilder.orderBy('car.car_id', filterDto.sortDirection || 'ASC');
 
-    queryBuilder.orderBy('car.car_id', filterDto.sortDirection || 'ASC')
-      .skip(pageInputDto.skip)
-      .take(pageInputDto.limit);
+    let entities: Car[];
+    let pageMetaDto: PageMetaDto;
 
-    const itemCount = await queryBuilder.getCount();
-    const { entities } = await queryBuilder.getRawAndEntities();
-    const pageMetaDto = new PageMetaDto(pageInputDto, itemCount);
+    const validPaging = !!pageInputDto.page && !!pageInputDto.limit;
+
+    if (validPaging) {
+      const page = pageInputDto.page;
+      const limit = pageInputDto.limit;
+      queryBuilder.skip((page - 1) * limit).take(limit);
+      const itemCount = await queryBuilder.getCount();
+      const result = await queryBuilder.getRawAndEntities();
+      entities = result.entities;
+      pageMetaDto = new PageMetaDto(pageInputDto, itemCount);
+    } else {
+      const result = await queryBuilder.getRawAndEntities();
+      entities = result.entities;
+      pageMetaDto = new PageMetaDto(new PageInputDto(), entities.length);
+    }
 
     return new PageDto(entities, pageMetaDto);
   }

@@ -1,21 +1,15 @@
-import { IsInt, IsOptional, Max, Min } from "class-validator";
 import { Type } from "class-transformer";
-
+import { IsInt, IsOptional, Min } from "class-validator";
 export class PageInputDto {
+    @IsOptional()
     @Type(() => Number)
     @IsInt()
     @Min(1)
-    @IsOptional()
-    readonly page?: number = 1;
+    readonly page?: number;
 
+    @IsOptional()
     @Type(() => Number)
     @IsInt()
     @Min(1)
-    @Max(50)
-    @IsOptional()
-    readonly limit?: number = 10;
-
-    get skip(): number {
-        return (this.page! - 1) * this.limit!;
-    }
+    readonly limit?: number;
 }

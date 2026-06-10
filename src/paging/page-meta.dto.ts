@@ -11,8 +11,8 @@ export class PageMetaDto {
     pageInputDto: PageInputDto,
     itemCount: number,
   ) {
-    this.page = pageInputDto.page!;
-    this.limit = pageInputDto.limit!;
+    this.page = pageInputDto.page || 1;
+    this.limit = pageInputDto.limit || itemCount;
 
     this.itemCount = itemCount;
 

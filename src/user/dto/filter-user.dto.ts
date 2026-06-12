@@ -20,4 +20,8 @@ export class FilterUserDto {
     @IsOptional()
     @IsBoolean()
     readonly active?: boolean;
+
+    @IsString()
+    @IsOptional()
+    readonly role?: string;
 }

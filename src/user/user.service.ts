@@ -110,7 +110,11 @@ export class UserService {
       typeof filterDto.active === 'boolean' && {
         condition: 'user.is_active = :active',
         params: { active: filterDto.active },
-      }
+      },
+      typeof filterDto.role === 'string' && {
+        condition: 'user.role = :role',
+        params: { role: filterDto.role },
+      },
     ].filter(Boolean) as { condition: string; params: object }[];
 
     queryBuilder.where(

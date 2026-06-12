@@ -220,4 +220,37 @@ export class CarService {
       }
     });
   }
+
+  async uniqueRegistrationNumber(registrationNumber: string, id?: number): Promise<{ isUnique: boolean }> {
+    const existing = await this.carRepository.findOne({
+      where: {
+        registrationNumber,
+        isDeleted: false,
+        ...(id ? { car_id: Not(id) } : {})
+      }
+    });
+    return { isUnique: !existing };
+  }
+
+    async uniqueImeiDat(imeiDat: string, id?: number): Promise<{ isUnique: boolean }> {
+    const existing = await this.carRepository.findOne({
+      where: {
+        imeiDat,
+        isDeleted: false,
+        ...(id ? { car_id: Not(id) } : {})
+      }
+    });
+    return { isUnique: !existing };
+  }
+
+    async uniqueSerialNumber(serialNumber: string, id?: number): Promise<{ isUnique: boolean }> {
+    const existing = await this.carRepository.findOne({
+      where: {
+        serialNumber,
+        isDeleted: false,
+        ...(id ? { car_id: Not(id) } : {})
+      }
+    });
+    return { isUnique: !existing };
+  }
 }

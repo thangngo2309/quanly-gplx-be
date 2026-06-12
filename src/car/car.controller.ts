@@ -33,6 +33,21 @@ export class CarController {
     return this.carService.deleteMulti(deleteMultiCarDto);
   }
 
+  @Post('/unique-registration-number')
+  uniqueRegistrationNumber(@Body('registrationNumber') registrationNumber: string, @Body('id') id?: number) {
+    return this.carService.uniqueRegistrationNumber(registrationNumber, id);
+  }
+
+  @Post('/unique-imei-dat')
+  uniqueImeiDat(@Body('imeiDat') imeiDat: string, @Body('id') id?: number) {
+    return this.carService.uniqueImeiDat(imeiDat, id);
+  }
+
+  @Post('/unique-serial-number')
+  uniqueSerialNumber(@Body('serialNumber') serialNumber: string, @Body('id') id?: number) {
+    return this.carService.uniqueSerialNumber(serialNumber, id);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.carService.findOne(+id);

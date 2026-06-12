@@ -126,7 +126,7 @@ export class UserService {
         item.params
       );
     });
-    queryBuilder.orderBy(filterDto.sortBy || 'user.user_id', filterDto.sortDirection || 'ASC');
+    queryBuilder.orderBy(filterDto.sortBy || 'user.user_id', filterDto.sortDirection || 'DESC');
 
     let entities: User[];
     let pageMetaDto: PageMetaDto;

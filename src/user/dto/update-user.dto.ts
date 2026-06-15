@@ -62,7 +62,7 @@ export class UpdateUserDto {
     @IsOptional()
     @IsString()
     @MaxLength(100)
-    @Matches(/^\S+$/, { message: 'Giấy chứng nhận giáo viên chỉ chứa chữ, số và kí tự đặc biệt, không có khoảng trắng' })
+    @Matches(/^\S*$/, { message: 'Giấy chứng nhận giáo viên chỉ chứa chữ, số và kí tự đặc biệt, không có khoảng trắng' })
     teacher_certificate_number?: string;
 
     @IsOptional()
@@ -82,7 +82,7 @@ export class UpdateUserDto {
     @IsOptional()
     @IsString()
     @MaxLength(100)
-    @Matches(/^\S+$/, { message: 'Giấy chứng nhận sức khỏe chỉ chứa chữ, số và kí tự đặc biệt, không có khoảng trắng' })
+    @Matches(/^\S*$/, { message: 'Giấy chứng nhận sức khỏe chỉ chứa chữ, số và kí tự đặc biệt, không có khoảng trắng' })
     health_certificate_number?: string;
 
     @IsOptional()
@@ -92,7 +92,7 @@ export class UpdateUserDto {
     @IsOptional()
     @IsString()
     @MaxLength(100)
-    @Matches(/^\S+$/, { message: 'Số hợp đồng chỉ chứa chữ, số và kí tự đặc biệt, không có khoảng trắng' })
+    @Matches(/^\S*$/, { message: 'Số hợp đồng chỉ chứa chữ, số và kí tự đặc biệt, không có khoảng trắng' })
     contract_number?: string;
 
     @IsOptional()

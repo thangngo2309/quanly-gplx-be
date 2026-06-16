@@ -1,6 +1,5 @@
 import {
   IsDate,
-  IsDateString,
   IsEnum,
   IsNotEmpty,
   IsOptional,
@@ -114,7 +113,8 @@ export class CreateUserDto {
   health_certificate_number?: string;
 
   @IsOptional()
-  @IsDateString()
+  @IsDate()
+  @Type(() => Date)
   health_certificate_expiry_date?: Date;
 
   @IsOptional()
@@ -133,7 +133,8 @@ export class CreateUserDto {
   contract_signed_date?: Date;
 
   @IsOptional()
-  @IsDateString()
+  @IsDate()
+  @Type(() => Date)
   @ExpiryDate('contract_signed_date')
   contract_expiry_date?: Date;
 }

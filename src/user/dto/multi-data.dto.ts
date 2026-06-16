@@ -1,4 +1,4 @@
-import { IsBoolean, IsDate, IsDateString, IsEnum, IsNotEmpty, IsOptional, IsString, MaxDate, MaxLength } from "class-validator";
+import { IsBoolean, IsDate, IsEnum, IsNotEmpty, IsOptional, IsString, MaxDate, MaxLength } from "class-validator";
 import { TeachingSubject } from "../../enum/teaching-subject.enum";
 import { RecruitmentType } from "../../enum/recruitment_type.enum";
 import { ExpiryDate } from "../../decorator/expirydate.decorator";
@@ -59,7 +59,8 @@ export class MultiDataDto {
     teacher_certificate_issue_place?: string;
 
     @IsOptional()
-    @IsDateString()
+    @IsDate()
+    @Type(() => Date)
     health_certificate_expiry_date?: Date;
 
     @IsOptional()
@@ -72,7 +73,8 @@ export class MultiDataDto {
     contract_signed_date?: Date;
 
     @IsOptional()
-    @IsDateString()
+    @IsDate()
+    @Type(() => Date)
     @ExpiryDate('contract_signed_date')
     contract_expiry_date?: Date;
 }

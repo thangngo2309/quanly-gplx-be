@@ -1,4 +1,4 @@
-import { IsBoolean, IsDate, IsDateString, IsEnum, IsNotEmpty, IsOptional, IsString, Matches, MaxDate, MaxLength } from "class-validator";
+import { IsBoolean, IsDate, IsEnum, IsNotEmpty, IsOptional, IsString, Matches, MaxDate, MaxLength } from "class-validator";
 import { RecruitmentType } from "../../enum/recruitment_type.enum";
 import { TeachingSubject } from "../../enum/teaching-subject.enum";
 import { ExpiryDate } from "../../decorator/expirydate.decorator";
@@ -86,7 +86,8 @@ export class UpdateUserDto {
     health_certificate_number?: string;
 
     @IsOptional()
-    @IsDateString()
+    @IsDate()
+    @Type(() => Date)
     health_certificate_expiry_date?: Date;
 
     @IsOptional()
@@ -105,7 +106,8 @@ export class UpdateUserDto {
     contract_signed_date?: Date;
 
     @IsOptional()
-    @IsDateString()
+    @Type(() => Date)
+    @IsDate()
     @ExpiryDate('contract_signed_date')
     contract_expiry_date?: Date;
 

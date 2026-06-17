@@ -12,6 +12,7 @@ import { PageMetaDto } from '../paging/page-meta.dto';
 import { UpdateMultiUserDto } from './dto/update-multi-user.dto';
 import { DeleteMultiUserDto } from './dto/delete-multi-user.dto';
 import { FilterUserDto } from './dto/filter-user.dto';
+import * as generator from 'generate-password';
 
 @Injectable()
 export class UserService {
@@ -295,5 +296,30 @@ export class UserService {
       }
     });
     return { isUnique: !existing };
+  }
+
+  async resetPassword(user_id: number) {
+    const existing = await this.userRepository.findOne({
+      where: { user_id, is_deleted: false }
+    });
+
+    if (!existing) {
+      throw new BadRequestException('Không tìm thấy người dùng này');
+    }
+
+    const password = generator.generate({
+      length: 10,
+      numbers: true,
+      symbols: true,
+      lowercase: true,
+      uppercase: true,
+      strict: true,
+    });
+    const hashedPassword = await bcrypt.hash(password, 10);
+    await this.userRepository.update({ user_id }, {
+      password: hashedPassword
+    });
+
+    return { password };
   }
 } 

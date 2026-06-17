@@ -8,6 +8,8 @@ import { User } from './entities/user.entity';
 import { UpdateMultiUserDto } from './dto/update-multi-user.dto';
 import { DeleteMultiUserDto } from './dto/delete-multi-user.dto';
 import { FilterUserDto } from './dto/filter-user.dto';
+import { UserRole } from '../enum/user-role';
+import { Roles } from '../decorator/roles.decorator';
 
 @Controller('user')
 export class UserController {
@@ -46,6 +48,12 @@ export class UserController {
   @Post('/unique-contract-number')
   uniqueContractNumber(@Body('contract_number') contract_number: string, @Body('id') id?: number) {
     return this.userService.uniqueContractNumber(contract_number, id);
+  }
+
+  @Patch('/reset-password/:id')
+  @Roles([UserRole.ADMIN])
+  resetPassword(@Param('id') id: string) {
+    return this.userService.resetPassword(+id);
   }
 
   @Get(':id')

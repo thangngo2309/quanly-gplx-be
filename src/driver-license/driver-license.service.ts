@@ -1,0 +1,213 @@
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { CreateDriverLicenseDto } from './dto/create-driver-license.dto';
+import { UpdateDriverLicenseDto } from './dto/update-driver-license.dto';
+import { In, Not, Repository } from 'typeorm';
+import { DriverLicense } from './entities/driver-license.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { PageInputDto } from '../paging/page-input.dto';
+import { DriverLicenseFilterDto } from './dto/filter-driver-license.dto';
+import { PageMetaDto } from '../paging/page-meta.dto';
+import { PageDto } from '../paging/page.dto';
+import { DeleteMultiDriverLicenseDto } from './dto/delete-multi-driver-license.dto';
+import { UpdateMultiDriverLicenseDto } from './dto/update-multi-driver-license.dto';
+
+@Injectable()
+export class DriverLicenseService {
+  constructor(
+    @InjectRepository(DriverLicense)
+    private driverLicenseRepository: Repository<DriverLicense>,
+  ) { }
+
+  async create(createDriverLicenseDto: CreateDriverLicenseDto) {
+    await this.checkuniquefield(createDriverLicenseDto);
+    const driverLicense = this.driverLicenseRepository.create(createDriverLicenseDto);
+    return this.driverLicenseRepository.save(driverLicense);
+  }
+
+  async findAll(pageInputDto: PageInputDto, filterDto: DriverLicenseFilterDto) {
+    const queryBuilder = this.driverLicenseRepository.createQueryBuilder('driver_license')
+      .innerJoinAndSelect('driver_license.user', 'u');
+
+    const conditions: { condition: string; params: object }[] = [
+      !!filterDto.license_number && {
+        condition: 'driver_license.license_number LIKE :license_number',
+        params: { license_number: `%${filterDto.license_number}%` },
+      },
+      !!filterDto.fullname && {
+        condition: 'u.fullname LIKE :fullname',
+        params: { fullname: `%${filterDto.fullname}%` },
+      },
+      filterDto.active !== undefined && {
+        condition: 'driver_license.is_active = :is_active',
+        params: { is_active: filterDto.active },
+      },
+    ].filter(Boolean) as { condition: string; params: object }[];
+
+    queryBuilder.where('driver_license.is_deleted = false');
+    conditions.forEach((item) => { queryBuilder.andWhere(item.condition, item.params); });
+    queryBuilder.orderBy(`driver_license.${filterDto.sortBy}` || 'driver_license.driver_license_id', filterDto.sortDirection || 'ASC');
+
+    let entities: DriverLicense[];
+    let pageMetaDto: PageMetaDto;
+
+    const validPaging = !!pageInputDto.page && !!pageInputDto.limit;
+
+    if (validPaging) {
+      const page = pageInputDto.page;
+      const limit = pageInputDto.limit;
+      queryBuilder.skip((page - 1) * limit).take(limit);
+      const itemCount = await queryBuilder.getCount();
+      const result = await queryBuilder.getRawAndEntities();
+      entities = result.entities;
+      pageMetaDto = new PageMetaDto(pageInputDto, itemCount);
+    } else {
+      const result = await queryBuilder.getRawAndEntities();
+      entities = result.entities;
+      pageMetaDto = new PageMetaDto(new PageInputDto(), entities.length);
+    }
+
+    return new PageDto(entities, pageMetaDto);
+  }
+
+  async findOne(id: number) {
+    const existing = await this.driverLicenseRepository.findOne({
+      where: { driver_license_id: id, is_deleted: false },
+    });
+
+    if (!existing) { throw new BadRequestException(`Không tìm thấy giấy phép lái xe`); }
+    return existing;
+  }
+
+  async update(id: number, updateDriverLicenseDto: UpdateDriverLicenseDto) {
+    const existing = await this.driverLicenseRepository.findOne({ where: { driver_license_id: id, is_deleted: false } });
+    if (!existing) {
+      throw new BadRequestException(`Không tìm thấy giấy phép lái xe`);
+    }
+    await this.checkuniquefield(updateDriverLicenseDto, id);
+
+    const finalIssueDate = updateDriverLicenseDto.issue_date ?? existing.issue_date;
+    const finalExpiryDate = updateDriverLicenseDto.expiry_date ?? existing.expiry_date;
+    const finalPassDate = updateDriverLicenseDto.pass_date ?? existing.pass_date;
+
+    if (new Date(finalIssueDate) > new Date(finalExpiryDate)) {
+      throw new BadRequestException('Ngày hết hạn giấy phép lái xe phải lớn hơn ngày cấp');
+    }
+
+    if (new Date(finalPassDate) > new Date(finalExpiryDate)) {
+      throw new BadRequestException('Ngày trúng tuyển phải nhỏ hơn ngày hết hạn giấy phép lái xe');
+    }
+
+    await this.driverLicenseRepository.update(id, updateDriverLicenseDto);
+    return this.findOne(id);
+  }
+
+  async updateMultiple(multipleDriverLicenseDto: UpdateMultiDriverLicenseDto) {
+    const existing = await this.findMany(multipleDriverLicenseDto.driver_license_ids);
+    const updatedIds = existing.map(driver_license => Number(driver_license.driver_license_id));
+    const notFoundIds = multipleDriverLicenseDto.driver_license_ids
+      .map(id => Number(id)).filter(id => !updatedIds.includes(id));
+
+    const errors: string[] = [];
+    const validDriverLicenseIds: number[] = [];
+
+    for (const driver_license of existing) {
+      const final_issue_date = multipleDriverLicenseDto.data.issue_date || driver_license.issue_date;
+      const final_expiry_date = multipleDriverLicenseDto.data.expiry_date || driver_license.expiry_date;
+      const final_pass_date = multipleDriverLicenseDto.data.pass_date || driver_license.pass_date;
+
+      let hasError = false;
+
+      if (new Date(final_issue_date) > new Date(final_expiry_date)) {
+        errors.push(`Giấy phép lái xe ${driver_license.license_number}: Ngày hết hạn giấy phép lái xe phải lớn hơn ngày cấp`);
+        hasError = true;
+      }
+      if (new Date(final_pass_date) > new Date(final_issue_date)) {
+        errors.push(`Giấy phép lái xe ${driver_license.license_number}: Ngày trúng tuyển phải nhỏ hơn ngày cấp giấy phép lái xe`);
+        hasError = true;
+      }
+
+      if (!hasError) {
+        validDriverLicenseIds.push(driver_license.driver_license_id);
+      }
+
+      if (validDriverLicenseIds.length > 0) {
+        await this.driverLicenseRepository.update(
+          { driver_license_id: In(validDriverLicenseIds) },
+          multipleDriverLicenseDto.data
+        );
+      }
+
+      return {
+        updatedDriverLicense: validDriverLicenseIds.length > 0 ? await this.findMany(validDriverLicenseIds) : [],
+        missingIds: notFoundIds,
+        errors: errors.length > 0 ? errors : undefined,
+      };
+    }
+  }
+
+  async remove(id: number) {
+    const existing = await this.findOne(id);
+    existing.is_deleted = true;
+    await this.driverLicenseRepository.save(existing);
+    return { message: 'Giấy phép lái xe đã được xóa' };
+  }
+
+  async deleteMulti(deleteDriverLicenseDto: DeleteMultiDriverLicenseDto) {
+    const existing = await this.driverLicenseRepository.findBy({ driver_license_id: In(deleteDriverLicenseDto.driver_license_ids)});
+
+    const existingIds = existing.map(driver_license => Number(driver_license.driver_license_id));
+    const notFoundIds = deleteDriverLicenseDto.driver_license_ids
+      .map(id => Number(id))
+      .filter(id => !existingIds.includes(id));
+
+    if (existingIds.length > 0) {
+      await this.driverLicenseRepository.update(
+        { driver_license_id: In(existingIds) },
+        { is_deleted: true },
+      );
+    }
+
+    return {
+      deletedIds: existingIds,
+      missingIds: notFoundIds,
+    };
+  }
+
+  async checkUniqueDriverLicenseNumber(license_number: string, id?: number): Promise<{ isUnique: boolean }> {
+    const existing = await this.driverLicenseRepository.findOne({
+      where: {
+        license_number,
+        is_deleted: false,
+        ...(id ? { driver_license_id: Not(id) } : {})
+      }
+    });
+    return { isUnique: !existing };
+  }
+
+    async checkuniquefield(dto: CreateDriverLicenseDto | UpdateDriverLicenseDto, id?: number) {
+      const fields: string[] = ['license_number'];
+      for (const field of fields) {
+        if (dto[field]) {
+          const existing = await this.driverLicenseRepository.findOne({
+            where: {
+              [field]: dto[field],
+              is_deleted: false,
+              ...(id ? { driver_license_id: Not(id) } : {})
+            }
+          });
+          if (existing) {
+            throw new BadRequestException(`Giá trị ${field} đã tồn tại`);
+          }
+        }
+      }
+    }
+
+  private async findMany(ids: number[]): Promise<DriverLicense[]> {
+    return this.driverLicenseRepository.find({
+      where: {
+        driver_license_id: In(ids),
+        is_deleted: false
+      }
+    });
+  }
+}

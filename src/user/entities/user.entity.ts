@@ -1,8 +1,9 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { UserRole } from '../../enum/user-role';
 import { TeachingSubject } from "../../enum/teaching-subject.enum";
 import { RecruitmentType } from "../../enum/recruitment_type.enum";
 import { UserPedagogyLevel } from "../../enum/user-pedagogy-level.enum";
+import { DriverLicense } from "../../driver-license/entities/driver-license.entity";
 
 @Entity('user')
 export class User {
@@ -21,10 +22,10 @@ export class User {
   @Column({ type: 'date' })
   date_of_birth: Date;
 
-  @Column({ type: 'varchar', length: 12})
+  @Column({ type: 'varchar', length: 12 })
   citizen_id: string;
 
-  @Column({ type: 'varchar', length: 255})
+  @Column({ type: 'varchar', length: 255 })
   address: string;
 
   @Column({ type: 'varchar', length: 10, nullable: true })
@@ -80,4 +81,7 @@ export class User {
 
   @Column({ type: 'boolean', default: false })
   is_deleted: boolean;
+
+  @OneToMany(() => DriverLicense, (driverLicense) => driverLicense.user)
+  driver_licenses: DriverLicense[];
 }

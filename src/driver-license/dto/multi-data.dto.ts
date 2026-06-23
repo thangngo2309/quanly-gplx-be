@@ -3,17 +3,7 @@ import { IsBoolean, IsDate, IsNotEmpty, IsNumber, IsOptional, IsString, Matches 
 import { ExpiryDate } from "../../decorator/expirydate.decorator";
 
 export class MultiDataDto {
-        @IsOptional()
-        @IsNotEmpty()
-        @IsNumber()
-        user_id?: number;
 
-        @IsOptional()
-        @IsNotEmpty()
-        @IsString()
-        @Matches(/^[A-Z0-9]+$/, { message: 'Giấy phép lái xe chỉ chấp nhận ký tự in hoa và số' })
-        license_number?: string;
-    
         @IsOptional()
         @IsDate()
         @Type(() => Date)

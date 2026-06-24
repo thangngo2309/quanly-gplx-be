@@ -37,7 +37,7 @@ export class DriverLicenseService {
         condition: 'u.fullname LIKE :fullname',
         params: { fullname: `%${filterDto.fullname}%` },
       },
-      filterDto.active !== undefined && {
+      filterDto.active != null && {
         condition: 'driver_license.is_active = :is_active',
         params: { is_active: filterDto.active },
       },
@@ -45,7 +45,10 @@ export class DriverLicenseService {
 
     queryBuilder.where('driver_license.is_deleted = false');
     conditions.forEach((item) => { queryBuilder.andWhere(item.condition, item.params); });
-    queryBuilder.orderBy(`driver_license.${filterDto.sortBy}` || 'driver_license.driver_license_id', filterDto.sortDirection || 'ASC');
+    const orderByColumn = filterDto.sortBy 
+    ? (filterDto.sortBy.startsWith('u.') ? filterDto.sortBy : `driver_license.${filterDto.sortBy}`)
+    : "driver_license.driver_license_id";
+    queryBuilder.orderBy(orderByColumn, filterDto.sortDirection || 'DESC');
 
     let entities: DriverLicense[];
     let pageMetaDto: PageMetaDto;
@@ -153,7 +156,7 @@ export class DriverLicenseService {
   }
 
   async deleteMulti(deleteDriverLicenseDto: DeleteMultiDriverLicenseDto) {
-    const existing = await this.driverLicenseRepository.findBy({ driver_license_id: In(deleteDriverLicenseDto.driver_license_ids)});
+    const existing = await this.driverLicenseRepository.findBy({ driver_license_id: In(deleteDriverLicenseDto.driver_license_ids) });
 
     const existingIds = existing.map(driver_license => Number(driver_license.driver_license_id));
     const notFoundIds = deleteDriverLicenseDto.driver_license_ids
@@ -184,23 +187,23 @@ export class DriverLicenseService {
     return { isUnique: !existing };
   }
 
-    async checkuniquefield(dto: CreateDriverLicenseDto | UpdateDriverLicenseDto, id?: number) {
-      const fields: string[] = ['license_number'];
-      for (const field of fields) {
-        if (dto[field]) {
-          const existing = await this.driverLicenseRepository.findOne({
-            where: {
-              [field]: dto[field],
-              is_deleted: false,
-              ...(id ? { driver_license_id: Not(id) } : {})
-            }
-          });
-          if (existing) {
-            throw new BadRequestException(`Giá trị ${field} đã tồn tại`);
+  async checkuniquefield(dto: CreateDriverLicenseDto | UpdateDriverLicenseDto, id?: number) {
+    const fields: string[] = ['license_number'];
+    for (const field of fields) {
+      if (dto[field]) {
+        const existing = await this.driverLicenseRepository.findOne({
+          where: {
+            [field]: dto[field],
+            is_deleted: false,
+            ...(id ? { driver_license_id: Not(id) } : {})
           }
+        });
+        if (existing) {
+          throw new BadRequestException(`Giá trị ${field} đã tồn tại`);
         }
       }
     }
+  }
 
   private async findMany(ids: number[]): Promise<DriverLicense[]> {
     return this.driverLicenseRepository.find({

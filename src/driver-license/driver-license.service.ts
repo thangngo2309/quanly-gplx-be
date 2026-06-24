@@ -132,20 +132,20 @@ export class DriverLicenseService {
       if (!hasError) {
         validDriverLicenseIds.push(driver_license.driver_license_id);
       }
-
-      if (validDriverLicenseIds.length > 0) {
-        await this.driverLicenseRepository.update(
-          { driver_license_id: In(validDriverLicenseIds) },
-          multipleDriverLicenseDto.data
-        );
-      }
-
-      return {
-        updatedDriverLicense: validDriverLicenseIds.length > 0 ? await this.findMany(validDriverLicenseIds) : [],
-        missingIds: notFoundIds,
-        errors: errors.length > 0 ? errors : undefined,
-      };
     }
+
+    if (validDriverLicenseIds.length > 0) {
+      await this.driverLicenseRepository.update(
+        { driver_license_id: In(validDriverLicenseIds) },
+        multipleDriverLicenseDto.data
+      );
+    }
+
+    return {
+      updatedDriverLicense: validDriverLicenseIds.length > 0 ? await this.findMany(validDriverLicenseIds) : [],
+      missingIds: notFoundIds,
+      errors: errors.length > 0 ? errors : undefined,
+    };
   }
 
   async remove(id: number) {

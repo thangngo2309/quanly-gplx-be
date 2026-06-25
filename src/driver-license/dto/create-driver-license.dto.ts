@@ -1,5 +1,5 @@
 import { Type } from "class-transformer";
-import { IsDate, IsNotEmpty, IsNumber, IsString, Matches } from "class-validator";
+import { IsDate, IsNotEmpty, IsNumber, IsOptional, IsString, Matches } from "class-validator";
 import { ExpiryDate } from "../../decorator/expirydate.decorator";
 
 export class CreateDriverLicenseDto {
@@ -18,16 +18,16 @@ export class CreateDriverLicenseDto {
     @ExpiryDate('pass_date')
     issue_date: Date;
 
-    @IsNotEmpty()
+    @IsOptional()
     @IsDate()
     @Type(() => Date)
     @ExpiryDate('issue_date')
-    expiry_date: Date;
+    expiry_date?: Date;
 
-    @IsNotEmpty()
+    @IsOptional()
     @IsDate()
     @Type(() => Date)
-    pass_date: Date;
+    pass_date?: Date;
 
     @IsNotEmpty()
     @IsString()

@@ -92,11 +92,11 @@ export class DriverLicenseService {
     const finalExpiryDate = updateDriverLicenseDto.expiry_date ?? existing.expiry_date;
     const finalPassDate = updateDriverLicenseDto.pass_date ?? existing.pass_date;
 
-    if (new Date(finalIssueDate) > new Date(finalExpiryDate)) {
+    if (finalIssueDate && finalExpiryDate && new Date(finalIssueDate) > new Date(finalExpiryDate)) {
       throw new BadRequestException('Ngày hết hạn giấy phép lái xe phải lớn hơn ngày cấp');
     }
 
-    if (new Date(finalPassDate) > new Date(finalExpiryDate)) {
+    if (finalPassDate && finalExpiryDate && new Date(finalPassDate) > new Date(finalExpiryDate)) {
       throw new BadRequestException('Ngày trúng tuyển phải nhỏ hơn ngày hết hạn giấy phép lái xe');
     }
 

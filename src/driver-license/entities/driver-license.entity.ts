@@ -19,10 +19,10 @@ export class DriverLicense {
   @Column({ type: 'date' })
   issue_date: Date;
 
-  @Column({ type: 'date' })
+  @Column({ type: 'date', nullable: true })
   expiry_date: Date;
 
-  @Column({ type: 'date' })
+  @Column({ type: 'date', nullable: true })
   pass_date: Date;
 
   @Column({ type: 'varchar' })

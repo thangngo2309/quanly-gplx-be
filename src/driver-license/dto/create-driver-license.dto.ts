@@ -1,5 +1,6 @@
 import { Type } from "class-transformer";
 import { IsDate, IsNotEmpty, IsNumber, IsOptional, IsString, Matches } from "class-validator";
+import { GreaterDateOrEqual } from "../../decorator/greater-date-or-equal.decorator";
 import { ExpiryDate } from "../../decorator/expirydate.decorator";
 
 export class CreateDriverLicenseDto {
@@ -15,7 +16,7 @@ export class CreateDriverLicenseDto {
     @IsNotEmpty()
     @IsDate()
     @Type(() => Date)
-    @ExpiryDate('pass_date')
+    @GreaterDateOrEqual('pass_date')
     issue_date: Date;
 
     @IsOptional()

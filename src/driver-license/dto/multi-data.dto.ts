@@ -13,7 +13,7 @@ export class MultiDataDto {
         @IsOptional()
         @IsDate()
         @Type(() => Date)
-        @ExpiryDate('expiry_date')
+        @ExpiryDate('issue_date')
         expiry_date?: Date;
     
         @IsOptional()

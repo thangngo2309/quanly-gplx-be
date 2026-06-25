@@ -96,8 +96,8 @@ export class DriverLicenseService {
       throw new BadRequestException('Ngày hết hạn giấy phép lái xe phải lớn hơn ngày cấp');
     }
 
-    if (finalPassDate && finalExpiryDate && new Date(finalPassDate) > new Date(finalExpiryDate)) {
-      throw new BadRequestException('Ngày trúng tuyển phải nhỏ hơn ngày hết hạn giấy phép lái xe');
+    if (finalPassDate && finalIssueDate && new Date(finalPassDate) > new Date(finalIssueDate)) {
+      throw new BadRequestException('Ngày trúng tuyển phải nhỏ hơn hoặc bằng ngày cấp giấy phép lái xe');
     }
 
     await this.driverLicenseRepository.update(id, updateDriverLicenseDto);
@@ -125,7 +125,7 @@ export class DriverLicenseService {
         hasError = true;
       }
       if (new Date(final_pass_date) > new Date(final_issue_date)) {
-        errors.push(`Giấy phép lái xe ${driver_license.license_number}: Ngày trúng tuyển phải nhỏ hơn ngày cấp giấy phép lái xe`);
+        errors.push(`Giấy phép lái xe ${driver_license.license_number}: Ngày trúng tuyển phải nhỏ hơn hoặc bằng ngày cấp giấy phép lái xe`);
         hasError = true;
       }
 

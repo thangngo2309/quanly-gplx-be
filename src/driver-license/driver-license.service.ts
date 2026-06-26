@@ -120,11 +120,11 @@ export class DriverLicenseService {
 
       let hasError = false;
 
-      if (new Date(final_issue_date) > new Date(final_expiry_date)) {
+      if (final_issue_date && final_expiry_date && new Date(final_issue_date) > new Date(final_expiry_date)) {
         errors.push(`Giấy phép lái xe ${driver_license.license_number}: Ngày hết hạn giấy phép lái xe phải lớn hơn ngày cấp`);
         hasError = true;
       }
-      if (new Date(final_pass_date) > new Date(final_issue_date)) {
+      if (final_pass_date && final_issue_date && new Date(final_pass_date) > new Date(final_issue_date)) {
         errors.push(`Giấy phép lái xe ${driver_license.license_number}: Ngày trúng tuyển phải nhỏ hơn hoặc bằng ngày cấp giấy phép lái xe`);
         hasError = true;
       }

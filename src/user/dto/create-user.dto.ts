@@ -137,4 +137,7 @@ export class CreateUserDto {
   @Type(() => Date)
   @ExpiryDate('contract_signed_date')
   contract_expiry_date?: Date;
+
+  @IsOptional()
+  test_date_time?: Date;
 }

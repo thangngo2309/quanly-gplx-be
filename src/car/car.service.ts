@@ -52,7 +52,7 @@ export class CarService {
         item.params
       );
     });
-    queryBuilder.orderBy(`car.${filterDto.sortBy}` || 'car.car_id', filterDto.sortDirection || 'ASC');
+    queryBuilder.orderBy(`car.${filterDto.sortBy || 'car_id' }`, filterDto.sortDirection || 'ASC');
 
     let entities: Car[];
     let pageMetaDto: PageMetaDto;

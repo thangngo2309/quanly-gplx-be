@@ -114,4 +114,7 @@ export class UpdateUserDto {
     @IsOptional()
     @IsBoolean()
     is_active?: boolean;
+
+    @IsOptional()
+    test_date_time?: Date;
 }

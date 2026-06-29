@@ -70,10 +70,10 @@ export class User {
   @Column({ type: 'enum', enum: UserRole })
   role: UserRole;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamp with time zone' })
   created_at: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ type: 'timestamp with time zone' })
   updated_at: Date;
 
   @Column({ type: 'boolean', default: true })
@@ -84,4 +84,7 @@ export class User {
 
   @OneToMany(() => DriverLicense, (driverLicense) => driverLicense.user)
   driver_licenses: DriverLicense[];
+
+  @Column({ type: 'timestamp with time zone', nullable: true })
+  test_date_time: Date;
 }

@@ -34,9 +34,9 @@ export class DriverLicense {
   @Column({ type: 'boolean', default: false })
   is_deleted: boolean;
 
-  @CreateDateColumn({ type: 'timestamp' })
+  @CreateDateColumn({ type: 'timestamp with time zone' })
   created_at: Date;
 
-  @UpdateDateColumn({ type: 'timestamp' })
+  @UpdateDateColumn({ type: 'timestamp with time zone' })
   updated_at: Date;
 }

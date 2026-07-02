@@ -1,4 +1,4 @@
-import { IsBoolean, IsDate, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Min } from "class-validator";
+import { IsBoolean, IsDate, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Min, ValidateIf } from "class-validator";
 import { Type } from "class-transformer";
 import { ExpiryDate } from "../../decorator/expirydate.decorator";
 import { CarCategory } from "../../enum/car-category.enum";
@@ -25,7 +25,7 @@ export class MultiDataDto {
   @IsString()
   owner?: string;
 
-  @IsOptional()
+  @ValidateIf(o => o.hasDualBrake !== undefined)
   @IsBoolean()
   hasDualBrake?: boolean;
 
@@ -56,7 +56,7 @@ export class MultiDataDto {
   @Type(() => Date)
   insuranceExpiryDate?: Date;
 
-  @IsOptional()
+  @ValidateIf(o => o.isActive !== undefined)
   @IsBoolean()
   isActive?: boolean;
 }

@@ -1,4 +1,4 @@
-import { IsBoolean, IsDate, IsEnum, IsNotEmpty, IsOptional, IsString, MaxDate, MaxLength } from "class-validator";
+import { IsBoolean, IsDate, IsEnum, IsNotEmpty, IsOptional, IsString, MaxDate, MaxLength, ValidateIf } from "class-validator";
 import { TeachingSubject } from "../../enum/teaching-subject.enum";
 import { RecruitmentType } from "../../enum/recruitment_type.enum";
 import { ExpiryDate } from "../../decorator/expirydate.decorator";
@@ -12,7 +12,7 @@ export class MultiDataDto {
     @IsNotEmpty({ message: 'Nếu cập nhật tên, không được gửi chuỗi rỗng' })
     fullname?: string;
 
-    @IsOptional()
+    @ValidateIf(o => o.is_active !== undefined)
     @IsBoolean()
     is_active?: boolean;
 

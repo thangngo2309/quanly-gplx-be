@@ -10,16 +10,24 @@ import { PageMetaDto } from '../paging/page-meta.dto';
 import { PageDto } from '../paging/page.dto';
 import { DeleteMultiDriverLicenseDto } from './dto/delete-multi-driver-license.dto';
 import { UpdateMultiDriverLicenseDto } from './dto/update-multi-driver-license.dto';
+import { User } from '../user/entities/user.entity';
 
 @Injectable()
 export class DriverLicenseService {
   constructor(
     @InjectRepository(DriverLicense)
     private driverLicenseRepository: Repository<DriverLicense>,
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
   ) { }
 
   async create(createDriverLicenseDto: CreateDriverLicenseDto) {
     await this.checkuniquefield(createDriverLicenseDto);
+    const isUserValid = await this.checkUserValid(createDriverLicenseDto.user_id);
+    if (!isUserValid) {
+      throw new BadRequestException(`Không thể tạo GPLX cho người dùng đã ngưng hoạt động hoặc đã bị xóa.`);
+    }
+
     const driverLicense = this.driverLicenseRepository.create(createDriverLicenseDto);
     return this.driverLicenseRepository.save(driverLicense);
   }
@@ -43,11 +51,11 @@ export class DriverLicenseService {
       },
     ].filter(Boolean) as { condition: string; params: object }[];
 
-    queryBuilder.where('driver_license.is_deleted = false');
+    queryBuilder.where('driver_license.is_deleted = false AND u.is_deleted = false');
     conditions.forEach((item) => { queryBuilder.andWhere(item.condition, item.params); });
-    const orderByColumn = filterDto.sortBy 
-    ? (filterDto.sortBy.startsWith('u.') ? filterDto.sortBy : `driver_license.${filterDto.sortBy}`)
-    : "driver_license.driver_license_id";
+    const orderByColumn = filterDto.sortBy
+      ? (filterDto.sortBy.startsWith('u.') ? filterDto.sortBy : `driver_license.${filterDto.sortBy}`)
+      : "driver_license.driver_license_id";
     queryBuilder.orderBy(orderByColumn, filterDto.sortDirection || 'DESC');
 
     let entities: DriverLicense[];
@@ -74,19 +82,53 @@ export class DriverLicenseService {
 
   async findOne(id: number) {
     const existing = await this.driverLicenseRepository.findOne({
+      relations: ['user'],
       where: { driver_license_id: id, is_deleted: false },
     });
 
-    if (!existing) { throw new BadRequestException(`Không tìm thấy giấy phép lái xe`); }
+    if (!existing) {
+      throw new BadRequestException(`Không tìm thấy giấy phép lái xe`);
+    }
+
+    if (existing.user.is_deleted) {
+      throw new BadRequestException(`Không thể truy xuất GPLX của người dùng đã bị xóa.`);
+    }
+
+    return existing;
+  }
+
+  private async findOneById(id: number) {
+    const existing = await this.driverLicenseRepository.findOne({
+      relations: ['user'],
+      where: {
+        driver_license_id: id,
+        is_deleted: false,
+      },
+    });
+
+    if (!existing) {
+      throw new BadRequestException(`Không tìm thấy giấy phép lái xe`);
+    }
+
+    if (!existing.user.is_active || existing.user.is_deleted) {
+      throw new BadRequestException(
+        `Không thể cập nhật GPLX của người dùng đã ngưng hoạt động hoặc đã bị xóa.`,
+      );
+    }
+
     return existing;
   }
 
   async update(id: number, updateDriverLicenseDto: UpdateDriverLicenseDto) {
-    const existing = await this.driverLicenseRepository.findOne({ where: { driver_license_id: id, is_deleted: false } });
-    if (!existing) {
-      throw new BadRequestException(`Không tìm thấy giấy phép lái xe`);
-    }
+    const existing = await this.findOneById(id);
     await this.checkuniquefield(updateDriverLicenseDto, id);
+
+    if (updateDriverLicenseDto.user_id) {
+      const isUserValid = await this.checkUserValid(updateDriverLicenseDto.user_id);
+      if (!isUserValid) {
+        throw new BadRequestException('Không thể cập nhật GPLX này sang người dùng đã ngưng hoạt động hoặc đã bị xóa.');
+      }
+    }
 
     const finalIssueDate = updateDriverLicenseDto.issue_date ?? existing.issue_date;
     const finalExpiryDate = updateDriverLicenseDto.expiry_date ?? existing.expiry_date;
@@ -127,6 +169,14 @@ export class DriverLicenseService {
       if (final_pass_date && final_issue_date && new Date(final_pass_date) > new Date(final_issue_date)) {
         errors.push(`Giấy phép lái xe ${driver_license.license_number}: Ngày trúng tuyển phải nhỏ hơn hoặc bằng ngày cấp giấy phép lái xe`);
         hasError = true;
+      }
+
+      if (driver_license.user_id) {
+        const isUserValid = await this.checkUserValid(driver_license.user_id);
+        if (!isUserValid) {
+          errors.push(`Giấy phép lái xe ${driver_license.license_number}: Không thể cập nhật GPLX của người dùng đã ngưng hoạt động hoặc đã bị xóa.`);
+          hasError = true;
+        }
       }
 
       if (!hasError) {
@@ -212,5 +262,12 @@ export class DriverLicenseService {
         is_deleted: false
       }
     });
+  }
+
+  async checkUserValid(user_id: number): Promise<boolean> {
+    const existing = await this.userRepository.findOne(
+      { where: { user_id, is_active: true, is_deleted: false } }
+    );
+    return !!existing;
   }
 }

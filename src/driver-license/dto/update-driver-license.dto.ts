@@ -1,9 +1,9 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { CreateDriverLicenseDto } from './create-driver-license.dto';
-import { IsBoolean, IsOptional } from 'class-validator';
+import { IsBoolean, ValidateIf } from 'class-validator';
 
 export class UpdateDriverLicenseDto extends PartialType(CreateDriverLicenseDto) {
-    @IsOptional()
+    @ValidateIf(o => o.is_active !== undefined)
     @IsBoolean()
     is_active?: boolean;
 }

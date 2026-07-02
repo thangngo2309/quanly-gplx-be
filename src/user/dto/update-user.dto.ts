@@ -1,4 +1,4 @@
-import { IsBoolean, IsDate, IsEnum, IsNotEmpty, IsOptional, IsString, Matches, MaxDate, MaxLength } from "class-validator";
+import { IsBoolean, IsDate, IsEnum, IsNotEmpty, IsOptional, IsString, Matches, MaxDate, MaxLength, ValidateIf } from "class-validator";
 import { RecruitmentType } from "../../enum/recruitment_type.enum";
 import { TeachingSubject } from "../../enum/teaching-subject.enum";
 import { ExpiryDate } from "../../decorator/expirydate.decorator";
@@ -111,7 +111,7 @@ export class UpdateUserDto {
     @ExpiryDate('contract_signed_date')
     contract_expiry_date?: Date;
 
-    @IsOptional()
+    @ValidateIf(o => o.is_active !== undefined)
     @IsBoolean()
     is_active?: boolean;
 

@@ -1,5 +1,5 @@
 import { Type } from "class-transformer";
-import { IsBoolean, IsDate, IsNotEmpty, IsNumber, IsOptional, IsString, Matches } from "class-validator";
+import { IsBoolean, IsDate, IsNotEmpty, IsNumber, IsOptional, IsString, Matches, ValidateIf } from "class-validator";
 import { ExpiryDate } from "../../decorator/expirydate.decorator";
 import { GreaterDateOrEqual } from "../../decorator/greater-date-or-equal.decorator";
 
@@ -27,7 +27,7 @@ export class MultiDataDto {
         @IsString()
         issue_place?: string;
 
-        @IsOptional()
+        @ValidateIf(o => o.is_active !== undefined)
         @IsBoolean()
         is_active?: boolean;
 }

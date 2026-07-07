@@ -10,6 +10,8 @@ import { CarModule } from './car/car.module';
 import { Car } from './car/entities/car.entity';
 import { DriverLicenseModule } from './driver-license/driver-license.module';
 import { DriverLicense } from './driver-license/entities/driver-license.entity';
+import { VehicleInspectionModule } from './vehicle-inspection/vehicle-inspection.module';
+import { VehicleInspection } from './vehicle-inspection/entities/vehicle-inspection.entity';
 
 @Module({
   imports: [
@@ -23,13 +25,14 @@ import { DriverLicense } from './driver-license/entities/driver-license.entity';
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
-      entities: [User, Car, DriverLicense],
+      entities: [User, Car, DriverLicense, VehicleInspection],
       synchronize: true,
     }),
     UserModule,
     AuthModule,
     CarModule,
-    DriverLicenseModule
+    DriverLicenseModule,
+    VehicleInspectionModule,
   ],
   controllers: [AppController],
   providers: [AppService],

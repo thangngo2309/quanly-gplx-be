@@ -1,5 +1,6 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
 import { CarCategory } from '../../enum/car-category.enum';
+import { VehicleInspection } from '../../vehicle-inspection/entities/vehicle-inspection.entity';
 
 @Entity('car')
 export class Car {
@@ -59,4 +60,7 @@ export class Car {
 
   @UpdateDateColumn({ type: 'timestamp with time zone' })
   updatedAt: Date;
+
+  @OneToMany(() => VehicleInspection, (vehicleInspection) => vehicleInspection.car)
+  vehicle_inspection: VehicleInspection[];
 }

@@ -10,6 +10,15 @@ export class Car {
   @Column()
   registrationNumber: string;
 
+  @Column({nullable: true})
+  chassis_number: string;
+
+  @Column({nullable: true})
+  engine_number: string;
+
+  @Column({nullable: true})
+  vehicle_type: string;
+
   @Column()
   brand: string;
 
@@ -33,12 +42,6 @@ export class Car {
 
   @Column({ type: 'date' })
   practiceVehicleLicenseExpiryDate: Date;
-
-  @Column({ type: 'date' })
-  inspectionIssueDate: Date;
-
-  @Column({ type: 'date' })
-  inspectionExpiryDate: Date;
 
   @Column({ type: 'date' })
   insuranceExpiryDate: Date;

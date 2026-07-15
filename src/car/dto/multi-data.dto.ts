@@ -5,6 +5,10 @@ import { CarCategory } from "../../enum/car-category.enum";
 
 export class MultiDataDto {
   @IsOptional()
+  @IsString()
+  vehicle_type?: string;
+  
+  @IsOptional()
   @IsNotEmpty()
   @IsString()
   brand?: string;
@@ -39,17 +43,6 @@ export class MultiDataDto {
   @Type(() => Date)
   @ExpiryDate('practiceVehicleLicenseIssueDate')
   practiceVehicleLicenseExpiryDate?: Date;
-
-  @IsOptional()
-  @IsDate()
-  @Type(() => Date)
-  inspectionIssueDate?: Date;
-
-  @IsOptional()
-  @IsDate()
-  @Type(() => Date)
-  @ExpiryDate('inspectionIssueDate')
-  inspectionExpiryDate?: Date;
 
   @IsOptional()
   @IsDate()

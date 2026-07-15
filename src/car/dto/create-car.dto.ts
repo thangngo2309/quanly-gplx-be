@@ -12,6 +12,20 @@ export class CreateCarDto {
 
   @IsNotEmpty()
   @IsString()
+  @Matches(/^[A-Z0-9]{1,20}$/, { message: 'Số khung chỉ được chứa chữ in hoa, số và dấu gạch ngang, tối đa 20 ký tự' })
+  chassis_number: string;
+
+  @IsNotEmpty()
+  @IsString()
+  @Matches(/^[A-Z0-9]{1,20}$/, { message: 'Số máy chỉ được chứa chữ in hoa, số và dấu gạch ngang, tối đa 20 ký tự' })
+  engine_number: string;
+
+  @IsNotEmpty()
+  @IsString()
+  vehicle_type: string;
+
+  @IsNotEmpty()
+  @IsString()
   brand: string;
 
   @IsNotEmpty()
@@ -51,17 +65,6 @@ export class CreateCarDto {
   @IsNotEmpty()
   @IsDate()
   @Type(() => Date)
-  inspectionIssueDate: Date;
-
-  @IsNotEmpty()
-  @IsDate()
-  @Type(() => Date)
-  @ExpiryDate('inspectionIssueDate')
-  inspectionExpiryDate: Date;
-
-  @IsNotEmpty()
-  @IsDate()
-  @Type(() => Date)
   insuranceExpiryDate: Date;
 
   @IsNotEmpty()
@@ -73,4 +76,15 @@ export class CreateCarDto {
   @IsString()
   @Matches(/^[A-Z0-9-]+$/, { message: 'Số seri chỉ được chứa chữ in hoa, số và dấu gạch ngang' })
   serialNumber?: string;
+
+  @IsNotEmpty()
+  @IsDate()
+  @Type(() => Date)
+  inspection_issue_date: Date;
+
+  @IsNotEmpty()
+  @IsDate()
+  @Type(() => Date)
+  @ExpiryDate('inspection_issue_date')
+  inspection_expiry_date: Date;
 }

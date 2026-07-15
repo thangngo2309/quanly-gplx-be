@@ -99,7 +99,9 @@ export class VehicleInspectionService {
 
   async update(id: number, updateVehicleInspectionDto: UpdateVehicleInspectionDto) {
     const existing = await this.findOne(id);
-    await this.validateCarAvailable(existing.car_id);
+    if (updateVehicleInspectionDto.car_id) {
+      await this.validateCarAvailable(updateVehicleInspectionDto.car_id);
+    }
 
     const overlapExists = await this.checkOverlapInspectionDate(
       updateVehicleInspectionDto.car_id ?? existing.car_id,

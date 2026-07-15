@@ -48,6 +48,16 @@ export class CarController {
     return this.carService.uniqueSerialNumber(serialNumber, id);
   }
 
+  @Post('/unique-chassis-number')
+  uniqueChassisNumber(@Body('chassis_number') chassis_number: string, @Body('id') id?: number) {
+    return this.carService.uniqueChassisNumber(chassis_number, id);
+  }
+
+  @Post('/unique-engine-number')
+  uniqueEngineNumber(@Body('engine_number') engine_number: string, @Body('id') id?: number) {
+    return this.carService.uniqueEngineNumber(engine_number, id);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.carService.findOne(+id);

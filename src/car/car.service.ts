@@ -10,38 +10,51 @@ import { PageInputDto } from '../paging/page-input.dto';
 import { DeleteMultiCarDto } from './dto/delete-multi-car.dto';
 import { UpdateMultiCarDto } from './dto/update-multi-car.dto';
 import { CarFilterDto } from './dto/filter-car.dto';
+import { VehicleInspection } from '../vehicle-inspection/entities/vehicle-inspection.entity';
 
 @Injectable()
 export class CarService {
   constructor(
     @InjectRepository(Car)
     private carRepository: Repository<Car>,
+    @InjectRepository(VehicleInspection)
+    private vehicleInspectionRepository: Repository<VehicleInspection>
   ) { }
 
   async create(createCarDto: CreateCarDto) {
     await this.checkuniquefield(createCarDto);
-
     const car = this.carRepository.create(createCarDto);
-    return this.carRepository.save(car);
+    const savedCar = await this.carRepository.save(car);
+    await this.vehicleInspectionRepository.save({
+      car_id: savedCar.car_id,
+      inspection_issue_date: createCarDto.inspection_issue_date,
+      inspection_expiry_date: createCarDto.inspection_expiry_date,
+    });
+    return savedCar;
   }
 
   async findAll(pageInputDto: PageInputDto, filterDto: CarFilterDto) {
-    const queryBuilder = this.carRepository.createQueryBuilder('car');
+      const queryBuilder = this.carRepository.createQueryBuilder('car').innerJoinAndSelect(
+        'car.vehicle_inspection',
+        'vehicle_inspection',
+        'vehicle_inspection.is_deleted = false'
+      ).orderBy('vehicle_inspection.inspection_issue_date', 'DESC');
 
-    const conditions: { condition: string; params: object }[] = [
-      !!filterDto.registrationNumber && {
-        condition: 'car.registrationNumber LIKE :registrationNumber',
-        params: { registrationNumber: `%${filterDto.registrationNumber}%` },
-      },
-      !!filterDto.imeiDat && {
-        condition: 'car.imeiDat LIKE :imeiDat',
-        params: { imeiDat: `%${filterDto.imeiDat}%` },
-      },
-      typeof filterDto.active === 'boolean' && {
-        condition: 'car.isActive = :active',
-        params: { active: filterDto.active },
-      }
-    ].filter(Boolean) as { condition: string; params: object }[];
+
+      const conditions: { condition: string; params: object }[] = [
+        !!filterDto.registrationNumber && {
+          condition: 'car.registrationNumber LIKE :registrationNumber',
+          params: { registrationNumber: `%${filterDto.registrationNumber}%` },
+        },
+        !!filterDto.imeiDat && {
+          condition: 'car.imeiDat LIKE :imeiDat',
+          params: { imeiDat: `%${filterDto.imeiDat}%` },
+        },
+        typeof filterDto.active === 'boolean' && {
+          condition: 'car.isActive = :active',
+          params: { active: filterDto.active },
+        }
+      ].filter(Boolean) as { condition: string; params: object }[];
 
     queryBuilder.where(
       'car.isDeleted = false'
@@ -52,7 +65,10 @@ export class CarService {
         item.params
       );
     });
-    queryBuilder.orderBy(`car.${filterDto.sortBy || 'car_id' }`, filterDto.sortDirection || 'ASC');
+    const orderByColumn = filterDto.sortBy
+      ? (filterDto.sortBy.startsWith('vehicle_inspection.') ? filterDto.sortBy : `car.${filterDto.sortBy}`)
+      : "car.car_id";
+    queryBuilder.orderBy(orderByColumn, filterDto.sortDirection || 'ASC');
 
     let entities: Car[];
     let pageMetaDto: PageMetaDto;
@@ -100,12 +116,6 @@ export class CarService {
       throw new BadRequestException('Ngày hết hạn giấy phép xe tập lái phải lớn hơn ngày cấp');
     }
 
-    const finalInspectionIssueDate = updateCarDto.inspectionIssueDate ?? existing.inspectionIssueDate;
-    const finalInspectionExpiryDate = updateCarDto.inspectionExpiryDate ?? existing.inspectionExpiryDate;
-
-    if (new Date(finalInspectionIssueDate) > new Date(finalInspectionExpiryDate)) {
-      throw new BadRequestException('Ngày hết hạn đăng kiểm phải lớn hơn ngày cấp');
-    }
     await this.carRepository.update(id, updateCarDto);
     return this.carRepository.findOne({ where: { car_id: id, isDeleted: false } });
   }
@@ -119,11 +129,12 @@ export class CarService {
 
     existing.isDeleted = true;
     await this.carRepository.save(existing);
+    await this.vehicleInspectionRepository.update({ car_id: id }, { is_deleted: true });
     return { message: 'Xe đã được xóa' };
   }
 
   async checkuniquefield(dto: CreateCarDto | UpdateCarDto, id?: number) {
-    const fields: string[] = ['imeiDat', 'serialNumber', 'registrationNumber'];
+    const fields: string[] = ['imeiDat', 'serialNumber', 'registrationNumber', 'chassis_number', 'engine_number'];
     for (const field of fields) {
       if (dto[field]) {
         const existing = await this.carRepository.findOne({
@@ -157,6 +168,10 @@ export class CarService {
         { car_id: In(existingIds) },
         { isDeleted: true },
       );
+      await this.vehicleInspectionRepository.update(
+        { car_id: In(existingIds) },
+        { is_deleted: true },
+      );
     }
 
     return {
@@ -176,8 +191,6 @@ export class CarService {
     const validCarIds: number[] = [];
 
     for (const existingCar of existingCars) {
-      const final_inspection_issue_date = multiCarDto.data.inspectionIssueDate || existingCar.inspectionIssueDate;
-      const final_inspection_expiry_date = multiCarDto.data.inspectionExpiryDate || existingCar.inspectionExpiryDate;
       const final_practice_vehicle_license_issue_date = multiCarDto.data.practiceVehicleLicenseIssueDate || existingCar.practiceVehicleLicenseIssueDate;
       const final_practice_vehicle_license_expiry_date = multiCarDto.data.practiceVehicleLicenseExpiryDate || existingCar.practiceVehicleLicenseExpiryDate;
 
@@ -185,11 +198,6 @@ export class CarService {
 
       if (new Date(final_practice_vehicle_license_issue_date) > new Date(final_practice_vehicle_license_expiry_date)) {
         errors.push(`Xe ${existingCar.registrationNumber}: Ngày hết hạn giấy phép xe tập lái phải lớn hơn ngày cấp`);
-        hasError = true;
-      }
-
-      if (new Date(final_inspection_issue_date) > new Date(final_inspection_expiry_date)) {
-        errors.push(`Xe ${existingCar.registrationNumber}: Ngày hết hạn đăng kiểm phải lớn hơn ngày cấp`);
         hasError = true;
       }
 
@@ -232,7 +240,7 @@ export class CarService {
     return { isUnique: !existing };
   }
 
-    async uniqueImeiDat(imeiDat: string, id?: number): Promise<{ isUnique: boolean }> {
+  async uniqueImeiDat(imeiDat: string, id?: number): Promise<{ isUnique: boolean }> {
     const existing = await this.carRepository.findOne({
       where: {
         imeiDat,
@@ -243,10 +251,32 @@ export class CarService {
     return { isUnique: !existing };
   }
 
-    async uniqueSerialNumber(serialNumber: string, id?: number): Promise<{ isUnique: boolean }> {
+  async uniqueSerialNumber(serialNumber: string, id?: number): Promise<{ isUnique: boolean }> {
     const existing = await this.carRepository.findOne({
       where: {
         serialNumber,
+        isDeleted: false,
+        ...(id ? { car_id: Not(id) } : {})
+      }
+    });
+    return { isUnique: !existing };
+  }
+
+  async uniqueChassisNumber(chassis_number: string, id?: number): Promise<{ isUnique: boolean }> {
+    const existing = await this.carRepository.findOne({
+      where: {
+        chassis_number,
+        isDeleted: false,
+        ...(id ? { car_id: Not(id) } : {})
+      }
+    });
+    return { isUnique: !existing };
+  }
+
+  async uniqueEngineNumber(engine_number: string, id?: number): Promise<{ isUnique: boolean }> {
+    const existing = await this.carRepository.findOne({
+      where: {
+        engine_number,
         isDeleted: false,
         ...(id ? { car_id: Not(id) } : {})
       }

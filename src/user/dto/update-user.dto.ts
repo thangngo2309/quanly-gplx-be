@@ -38,6 +38,16 @@ export class UpdateUserDto {
     address?: string;
 
     @IsOptional()
+    @IsString()
+    @Matches(/^[0-9]{1,10}$/, { message: 'Số điện thoại tối đa 10 số' })
+    phone_number?: string;
+
+    @IsOptional()
+    @IsString()
+    @Matches(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, { message: 'Email không hợp lệ' })
+    email?: string;
+
+    @IsOptional()
     @IsEnum(RecruitmentType)
     recruitment_type?: RecruitmentType;
 

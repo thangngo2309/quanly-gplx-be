@@ -50,6 +50,16 @@ export class UserController {
     return this.userService.uniqueContractNumber(contract_number, id);
   }
 
+  @Post('/unique-phone-number')
+  uniquePhoneNumber(@Body('phone_number') phone_number: string, @Body('id') id?: number) {
+    return this.userService.uniquePhoneNumber(phone_number, id);
+  }
+
+  @Post('/unique-email')
+  uniqueEmail(@Body('email') email: string, @Body('id') id?: number) {
+    return this.userService.uniqueEmail(email, id);
+  }
+
   @Patch('/reset-password/:id')
   @Roles([UserRole.ADMIN])
   resetPassword(@Param('id') id: string) {

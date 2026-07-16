@@ -116,6 +116,10 @@ export class UserService {
         condition: 'user.role = :role',
         params: { role: filterDto.role },
       },
+      !!filterDto.phone_number && {
+        condition: 'user.phone_number LIKE :phone_number',
+        params: { phone_number: `%${filterDto.phone_number}%` },
+      },
     ].filter(Boolean) as { condition: string; params: object }[];
 
     queryBuilder.where(
@@ -152,7 +156,7 @@ export class UserService {
   }
 
   private async checkuniquefield(dto: CreateUserDto | UpdateUserDto, id?: number) {
-    const fields: string[] = ['username', 'citizen_id', 'teacher_certificate_number', 'health_certificate_number', 'contract_number'];
+    const fields: string[] = ['username', 'citizen_id', 'teacher_certificate_number', 'health_certificate_number', 'contract_number', 'phone_number', 'email'];
     for (const field of fields) {
       if (dto[field]) {
         const existing = await this.userRepository.findOne({
@@ -291,6 +295,28 @@ export class UserService {
     const existing = await this.userRepository.findOne({
       where: {
         contract_number,
+        is_deleted: false,
+        ...(id ? { user_id: Not(id) } : {})
+      }
+    });
+    return { isUnique: !existing };
+  }
+
+  async uniquePhoneNumber(phone_number: string, id?: number): Promise<{ isUnique: boolean }> {
+    const existing = await this.userRepository.findOne({
+      where: {
+        phone_number,
+        is_deleted: false,
+        ...(id ? { user_id: Not(id) } : {})
+      }
+    });
+    return { isUnique: !existing };
+  }
+
+  async uniqueEmail(email: string, id?: number): Promise<{ isUnique: boolean }> {
+    const existing = await this.userRepository.findOne({
+      where: {
+        email,
         is_deleted: false,
         ...(id ? { user_id: Not(id) } : {})
       }

@@ -24,4 +24,8 @@ export class FilterUserDto {
     @IsString()
     @IsOptional()
     readonly role?: string;
+
+    @IsString()
+    @IsOptional()
+    readonly phone_number?: string;
 }

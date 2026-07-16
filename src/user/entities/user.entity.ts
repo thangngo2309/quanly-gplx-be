@@ -28,6 +28,12 @@ export class User {
   @Column({ type: 'varchar', length: 255 })
   address: string;
 
+  @Column({ type: 'varchar', length: 10})
+  phone_number: string;
+
+  @Column({ type: 'varchar'})
+  email: string;
+
   @Column({ type: 'varchar', length: 10, nullable: true })
   education_level: string;
 

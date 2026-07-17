@@ -61,6 +61,16 @@ export class CreateUserDto {
   address: string;
 
   @IsNotEmpty()
+  @IsString()
+  @Matches(/^0[0-9]{1,9}$/, { message: 'Số điện thoại tối đa 10 số' })
+  phone_number: string;
+
+  @IsNotEmpty()
+  @IsString()
+  @Matches(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, { message: 'Email không đúng định dạng' })
+  email: string;
+
+  @IsNotEmpty()
   @IsEnum(UserRole)
   role: UserRole;
 

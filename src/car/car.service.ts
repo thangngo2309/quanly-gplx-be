@@ -34,12 +34,25 @@ export class CarService {
   }
 
   async findAll(pageInputDto: PageInputDto, filterDto: CarFilterDto) {
-      const queryBuilder = this.carRepository.createQueryBuilder('car').innerJoinAndSelect(
+    const queryBuilder = this.carRepository
+      .createQueryBuilder('car')
+      .innerJoinAndSelect(
         'car.vehicle_inspection',
         'vehicle_inspection',
-        'vehicle_inspection.is_deleted = false'
-      ).orderBy('vehicle_inspection.inspection_issue_date', 'DESC');
-
+        `
+      vehicle_inspection.is_deleted = false
+      AND vehicle_inspection.vehicle_inspection_id = (
+        SELECT latest_inspection.vehicle_inspection_id
+        FROM vehicle_inspection latest_inspection
+        WHERE latest_inspection.car_id = car.car_id
+          AND latest_inspection.is_deleted = false
+        ORDER BY
+          latest_inspection.inspection_issue_date DESC
+        LIMIT 1
+      )
+    `,
+      )
+      .where('car.isDeleted = false');
 
       const conditions: { condition: string; params: object }[] = [
         !!filterDto.registrationNumber && {

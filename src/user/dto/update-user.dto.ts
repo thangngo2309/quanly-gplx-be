@@ -39,7 +39,7 @@ export class UpdateUserDto {
 
     @IsOptional()
     @IsString()
-    @Matches(/^[0-9]{1,10}$/, { message: 'Số điện thoại tối đa 10 số' })
+    @Matches(/^0[0-9]{9}$/, { message: 'Số điện thoại phải bao gồm 10 chữ số và bắt đầu bằng số 0' })
     phone_number?: string;
 
     @IsOptional()

@@ -11,6 +11,10 @@ import { PageDto } from '../paging/page.dto';
 import { DeleteMultiDriverLicenseDto } from './dto/delete-multi-driver-license.dto';
 import { UpdateMultiDriverLicenseDto } from './dto/update-multi-driver-license.dto';
 import { User } from '../user/entities/user.entity';
+import { Settings } from '../settings/entities/setting.entity';
+import { InjectQueue } from '@nestjs/bull';
+import type { Queue } from 'bull';
+import { expiryReminderSetting } from '../constant/setting.constant';
 
 @Injectable()
 export class DriverLicenseService {
@@ -19,6 +23,10 @@ export class DriverLicenseService {
     private driverLicenseRepository: Repository<DriverLicense>,
     @InjectRepository(User)
     private userRepository: Repository<User>,
+    @InjectRepository(Settings)
+    private settingsRepository: Repository<Settings>,
+    @InjectQueue('send-email')
+    private readonly emailQueue: Queue,
   ) { }
 
   async create(createDriverLicenseDto: CreateDriverLicenseDto) {
@@ -269,5 +277,42 @@ export class DriverLicenseService {
       { where: { user_id, is_active: true, is_deleted: false } }
     );
     return !!existing;
+  }
+
+  async sendExpiryReminder() {
+    const expiryReminderDaysBefore =
+      await this.settingsRepository.findOne({
+        where: { key: expiryReminderSetting, is_active: true, is_deleted: false },
+      });
+
+    if (!expiryReminderDaysBefore) {
+      throw new BadRequestException(
+        `Không tìm thấy setting ${expiryReminderSetting}`,
+      );
+    }
+
+    const driverLicenses = await this.driverLicenseRepository
+      .createQueryBuilder('dl')
+      .innerJoinAndSelect('dl.user', 'u')
+      .where(`dl.expiry_date <= CURRENT_DATE + ${Number(expiryReminderDaysBefore.value)}`)
+      .andWhere('dl.expiry_date >= CURRENT_DATE')
+      .andWhere('dl.is_deleted = false')
+      .andWhere('dl.is_active = true')
+      .andWhere('u.is_deleted = false')
+      .andWhere('u.is_active = true')
+      .getMany();
+
+    for (const item of driverLicenses) {
+      await this.emailQueue.add(
+        'send-email',
+        {
+          driverLicense: item,
+        },
+        {
+          attempts: 3,
+          removeOnComplete: true,
+        },
+      );
+    }
   }
 }

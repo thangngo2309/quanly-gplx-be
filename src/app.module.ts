@@ -12,7 +12,12 @@ import { DriverLicenseModule } from './driver-license/driver-license.module';
 import { DriverLicense } from './driver-license/entities/driver-license.entity';
 import { VehicleInspectionModule } from './vehicle-inspection/vehicle-inspection.module';
 import { VehicleInspection } from './vehicle-inspection/entities/vehicle-inspection.entity';
-
+import { SettingsModule } from './settings/settings.module';
+import { Settings } from './settings/entities/setting.entity';
+import { ScheduleModule } from '@nestjs/schedule';
+import { TaskModule } from './task/task.module';
+import { MailerModule } from '@nestjs-modules/mailer';
+import { BullModule } from '@nestjs/bull';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -25,7 +30,7 @@ import { VehicleInspection } from './vehicle-inspection/entities/vehicle-inspect
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
-      entities: [User, Car, DriverLicense, VehicleInspection],
+      entities: [User, Car, DriverLicense, VehicleInspection, Settings],
       synchronize: true,
     }),
     UserModule,
@@ -33,8 +38,29 @@ import { VehicleInspection } from './vehicle-inspection/entities/vehicle-inspect
     CarModule,
     DriverLicenseModule,
     VehicleInspectionModule,
+    SettingsModule,
+    TaskModule,
+    ScheduleModule.forRoot(),
+    MailerModule.forRoot({
+      transport: {
+        host: process.env.SMTP_HOST,
+        port: Number(process.env.SMTP_PORT),
+        secure: true,
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS,
+        },
+      },
+    }),
+    BullModule.forRoot({
+      redis: {
+        host: process.env.REDIS_HOST,
+        port: Number(process.env.REDIS_PORT),
+        password: process.env.REDIS_PASSWORD,
+      },
+    }),
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }

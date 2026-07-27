@@ -13,7 +13,7 @@ import { Roles } from '../decorator/roles.decorator';
 
 @Controller('user')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(private readonly userService: UserService) { }
 
   @Post()
   create(@Body() createUserDto: CreateUserDto) {
@@ -89,5 +89,10 @@ export class UserController {
   @Post('delete-multiple')
   deleteMulti(@Body() deleteUserDto: DeleteMultiUserDto) {
     return this.userService.deleteMulti(deleteUserDto);
-    }
+  }
+
+  @Post('change-password/:id')
+  changePassword(@Param('id') id: string, @Body('old_password') old_password: string, @Body('new_password') new_password: string) {
+    return this.userService.changePassword(+id, old_password, new_password);
+  }
 }

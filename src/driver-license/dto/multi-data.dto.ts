@@ -1,10 +1,11 @@
-import { Type } from "class-transformer";
-import { IsBoolean, IsDate, IsNotEmpty, IsNumber, IsOptional, IsString, Matches, ValidateIf } from "class-validator";
+import { Transform, Type } from "class-transformer";
+import { IsBoolean, IsDate, IsNotEmpty, IsOptional, IsString, ValidateIf } from "class-validator";
 import { ExpiryDate } from "../../decorator/expirydate.decorator";
 import { GreaterDateOrEqual } from "../../decorator/greater-date-or-equal.decorator";
 
 export class MultiDataDto {
 
+        @Transform(({ value }) => value === null ? undefined : value)
         @IsOptional()
         @IsDate()
         @Type(() => Date)
@@ -22,6 +23,7 @@ export class MultiDataDto {
         @Type(() => Date)
         pass_date?: Date;
 
+        @Transform(({ value }) => value === null ? undefined : value)
         @IsOptional()
         @IsNotEmpty()
         @IsString()

@@ -3,14 +3,16 @@ import { RecruitmentType } from "../../enum/recruitment_type.enum";
 import { TeachingSubject } from "../../enum/teaching-subject.enum";
 import { ExpiryDate } from "../../decorator/expirydate.decorator";
 import { UserPedagogyLevel } from "../../enum/user-pedagogy-level.enum";
-import { Type } from "class-transformer";
+import { Transform, Type } from "class-transformer";
 export class UpdateUserDto {
+    @Transform(({ value }) => value === null ? undefined : value)
     @IsOptional()
     @IsString()
     @MaxLength(100)
     @IsNotEmpty({ message: 'Nếu cập nhật tên, không được gửi chuỗi rỗng' })
     fullname?: string;
-
+    
+    @Transform(({ value }) => value === null ? undefined : value)
     @IsOptional()
     @Type(() => Date)
     @IsDate()
@@ -26,22 +28,26 @@ export class UpdateUserDto {
     )
     date_of_birth?: Date;
 
+    @Transform(({ value }) => value === null ? undefined : value)
     @IsOptional()
     @IsString()
     @Matches(/^[0-9]{12}$/, { message: 'CCCD phải gồm 12 số' })
     citizen_id?: string;
 
+    @Transform(({ value }) => value === null ? undefined : value)
     @IsOptional()
     @IsString()
     @MaxLength(255)
     @IsNotEmpty({ message: 'Nếu cập nhật địa chỉ, không được gửi chuỗi rỗng' })
     address?: string;
 
+    @Transform(({ value }) => value === null ? undefined : value)
     @IsOptional()
     @IsString()
     @Matches(/^0[0-9]{9}$/, { message: 'Số điện thoại phải bao gồm 10 chữ số và bắt đầu bằng số 0' })
     phone_number?: string;
 
+    @Transform(({ value }) => value === null ? undefined : value)
     @IsOptional()
     @IsString()
     @Matches(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, { message: 'Email không hợp lệ' })

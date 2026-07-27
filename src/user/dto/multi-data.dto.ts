@@ -3,9 +3,10 @@ import { TeachingSubject } from "../../enum/teaching-subject.enum";
 import { RecruitmentType } from "../../enum/recruitment_type.enum";
 import { ExpiryDate } from "../../decorator/expirydate.decorator";
 import { UserPedagogyLevel } from "../../enum/user-pedagogy-level.enum";
-import { Type } from "class-transformer";
+import { Transform, Type } from "class-transformer";
 
 export class MultiDataDto {
+    @Transform(({ value }) => value === null ? undefined : value)
     @IsOptional()
     @IsString()
     @MaxLength(100)
@@ -16,6 +17,7 @@ export class MultiDataDto {
     @IsBoolean()
     is_active?: boolean;
 
+    @Transform(({ value }) => value === null ? undefined : value)
     @IsOptional()
     @IsString()
     @MaxLength(255)

@@ -13,12 +13,15 @@ import { UpdateMultiUserDto } from './dto/update-multi-user.dto';
 import { DeleteMultiUserDto } from './dto/delete-multi-user.dto';
 import { FilterUserDto } from './dto/filter-user.dto';
 import * as generator from 'generate-password';
+import { DriverLicense } from '../driver-license/entities/driver-license.entity';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
+    @InjectRepository(DriverLicense)
+    private driverLicenseRepository: Repository<DriverLicense>,
   ) { }
 
   async create(createUserDto: CreateUserDto): Promise<User> {
@@ -92,6 +95,7 @@ export class UserService {
     }
 
     await this.userRepository.update({ user_id: id }, { is_deleted: true });
+    await this.driverLicenseRepository.update({ user_id: id }, { is_deleted: true });
     return { message: 'Xóa người dùng thành công' };
   }
 
@@ -236,6 +240,10 @@ export class UserService {
 
     if (existingIds.length > 0) {
       await this.userRepository.update(
+        { user_id: In(existingIds) },
+        { is_deleted: true },
+      );
+      await this.driverLicenseRepository.update(
         { user_id: In(existingIds) },
         { is_deleted: true },
       );

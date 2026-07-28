@@ -10,6 +10,7 @@ import { DeleteMultiUserDto } from './dto/delete-multi-user.dto';
 import { FilterUserDto } from './dto/filter-user.dto';
 import { UserRole } from '../enum/user-role';
 import { Roles } from '../decorator/roles.decorator';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Controller('user')
 export class UserController {
@@ -92,7 +93,7 @@ export class UserController {
   }
 
   @Post('change-password/:id')
-  changePassword(@Param('id') id: string, @Body('old_password') old_password: string, @Body('new_password') new_password: string) {
-    return this.userService.changePassword(+id, old_password, new_password);
+  changePassword(@Param('id') id: string, @Body() changePasswordDto: ChangePasswordDto) {
+    return this.userService.changePassword(+id, changePasswordDto);
   }
 }

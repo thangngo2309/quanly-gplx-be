@@ -208,13 +208,25 @@ export class DriverLicenseService {
 
   async remove(id: number) {
     const existing = await this.findOne(id);
+    if (existing.user.is_active === false) {
+      throw new BadRequestException(`Không thể xóa GPLX vì người dùng đã ngưng hoạt động.`);
+    }
     existing.is_deleted = true;
     await this.driverLicenseRepository.save(existing);
     return { message: 'Giấy phép lái xe đã được xóa' };
   }
 
   async deleteMulti(deleteDriverLicenseDto: DeleteMultiDriverLicenseDto) {
-    const existing = await this.driverLicenseRepository.findBy({ driver_license_id: In(deleteDriverLicenseDto.driver_license_ids) });
+    const existing = await this.driverLicenseRepository.find({
+      relations: ['user'],
+      where: {
+        driver_license_id: In(deleteDriverLicenseDto.driver_license_ids),
+        user: {
+          is_active: true,
+          is_deleted: false,
+        },
+      },
+    })
 
     const existingIds = existing.map(driver_license => Number(driver_license.driver_license_id));
     const notFoundIds = deleteDriverLicenseDto.driver_license_ids

@@ -14,6 +14,7 @@ import { DeleteMultiUserDto } from './dto/delete-multi-user.dto';
 import { FilterUserDto } from './dto/filter-user.dto';
 import * as generator from 'generate-password';
 import { DriverLicense } from '../driver-license/entities/driver-license.entity';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Injectable()
 export class UserService {
@@ -357,7 +358,7 @@ export class UserService {
     return { password };
   }
 
-  async changePassword(user_id: number, old_password: string, new_password: string) {
+  async changePassword(user_id: number, changePasswordDto: ChangePasswordDto) {
     const existing = await this.userRepository.findOne({
       where: { user_id, is_deleted: false, is_active: true },
       select: {
@@ -370,16 +371,16 @@ export class UserService {
       throw new BadRequestException('Không tìm thấy người dùng này');
     }
 
-    if (old_password === new_password) {
+    if (changePasswordDto.old_password === changePasswordDto.new_password) {
       throw new BadRequestException('Mật khẩu mới không được trùng với mật khẩu cũ');
     }
 
-    const isMatch = await bcrypt.compare(old_password, existing.password);
+    const isMatch = await bcrypt.compare(changePasswordDto.old_password, existing.password);
     if (!isMatch) {
       throw new BadRequestException("Mật khẩu cũ không đúng");
     }
 
-    const hashedPassword = await bcrypt.hash(new_password, 10);
+    const hashedPassword = await bcrypt.hash(changePasswordDto.new_password, 10);
     await this.userRepository.update({ user_id }, {
       password: hashedPassword
     });

@@ -1,5 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { User } from '../../user/entities/user.entity';
+import { EmailSendStatus } from '../../enum/email-send-status.enum';
 
 @Entity('driver_licenses')
 export class DriverLicense {
@@ -33,6 +34,9 @@ export class DriverLicense {
 
   @Column({ type: 'boolean', default: false })
   is_deleted: boolean;
+
+  @Column({ type: 'enum', enum: EmailSendStatus, default: EmailSendStatus.PENDING })
+  email_send_status: EmailSendStatus;
 
   @CreateDateColumn({ type: 'timestamp with time zone' })
   created_at: Date;

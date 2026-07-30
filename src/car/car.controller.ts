@@ -58,6 +58,11 @@ export class CarController {
     return this.carService.uniqueEngineNumber(engine_number, id);
   }
 
+  @Get(':car_id/vehicle-inspection')
+  getVehicleInspectionByCarId(@Param('car_id') car_id: number) {
+    return this.carService.getVehicleInspectionByCarId(car_id);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.carService.findOne(+id);

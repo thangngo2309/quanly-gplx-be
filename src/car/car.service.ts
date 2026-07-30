@@ -296,4 +296,21 @@ export class CarService {
     });
     return { isUnique: !existing };
   }
+
+  async getVehicleInspectionByCarId(car_id: number){
+    const existingCar = await this.carRepository.findOne({ where: { car_id, isDeleted: false } });
+    if (!existingCar) {
+      throw new BadRequestException('Không tìm thấy xe');
+    }
+    const vehicleInspection = await this.vehicleInspectionRepository.find({
+      where: {
+        car_id,
+        is_deleted: false
+      },
+      order: {
+        inspection_issue_date: 'DESC'
+      }
+    });
+    return vehicleInspection;
+  }
 }

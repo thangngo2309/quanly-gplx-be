@@ -15,6 +15,8 @@ import { Settings } from '../settings/entities/setting.entity';
 import { InjectQueue } from '@nestjs/bull';
 import type { Queue } from 'bull';
 import { expiryReminderSetting } from '../constant/setting.constant';
+import { EmailSendStatus } from '../enum/email-send-status.enum';
+import dayjs from 'dayjs';
 
 @Injectable()
 export class DriverLicenseService {
@@ -138,6 +140,10 @@ export class DriverLicenseService {
       }
     }
 
+    if (existing.email_send_status === EmailSendStatus.FAILED || existing.email_send_status === EmailSendStatus.QUEUED) {
+      throw new BadRequestException('Không thể cập nhật GPLX này vì email đang bị lỗi hoặc đang trong hàng đợi.');
+    }
+
     const finalIssueDate = updateDriverLicenseDto.issue_date ?? existing.issue_date;
     const finalExpiryDate = updateDriverLicenseDto.expiry_date ?? existing.expiry_date;
     const finalPassDate = updateDriverLicenseDto.pass_date ?? existing.pass_date;
@@ -150,12 +156,22 @@ export class DriverLicenseService {
       throw new BadRequestException('Ngày trúng tuyển phải nhỏ hơn hoặc bằng ngày cấp giấy phép lái xe');
     }
 
-    await this.driverLicenseRepository.update(id, updateDriverLicenseDto);
+    if (updateDriverLicenseDto.expiry_date && !dayjs(updateDriverLicenseDto.expiry_date).isSame(existing.expiry_date, 'day')) {
+      await this.driverLicenseRepository.update(id, { ...updateDriverLicenseDto, email_send_status: EmailSendStatus.PENDING })
+    }
+    else {
+      await this.driverLicenseRepository.update(id, updateDriverLicenseDto);
+    }
     return this.findOne(id);
   }
 
   async updateMultiple(multipleDriverLicenseDto: UpdateMultiDriverLicenseDto) {
-    const existing = await this.findMany(multipleDriverLicenseDto.driver_license_ids);
+    const existing = await this.driverLicenseRepository.find({
+      where: {
+        driver_license_id: In(multipleDriverLicenseDto.driver_license_ids),
+        email_send_status: In([EmailSendStatus.PENDING, EmailSendStatus.SUCCESS])
+      }
+    });
     const updatedIds = existing.map(driver_license => Number(driver_license.driver_license_id));
     const notFoundIds = multipleDriverLicenseDto.driver_license_ids
       .map(id => Number(id)).filter(id => !updatedIds.includes(id));
@@ -193,10 +209,27 @@ export class DriverLicenseService {
     }
 
     if (validDriverLicenseIds.length > 0) {
-      await this.driverLicenseRepository.update(
-        { driver_license_id: In(validDriverLicenseIds) },
-        multipleDriverLicenseDto.data
-      );
+      const changedExpiryIds = existing.filter(driver_license => {
+        if (!multipleDriverLicenseDto.data.expiry_date) return false;
+        return !dayjs(driver_license.expiry_date).isSame(multipleDriverLicenseDto.data.expiry_date, 'day');
+      })
+        .map(driver_license => Number(driver_license.driver_license_id));
+
+      const unchangedExpiryIds = validDriverLicenseIds.filter(id => !changedExpiryIds.includes(id));
+
+      if (changedExpiryIds.length > 0) {
+        await this.driverLicenseRepository.update(
+          { driver_license_id: In(changedExpiryIds) },
+          { ...multipleDriverLicenseDto.data, email_send_status: EmailSendStatus.PENDING }
+        );
+      }
+
+      if (unchangedExpiryIds.length > 0) {
+        await this.driverLicenseRepository.update(
+          { driver_license_id: In(unchangedExpiryIds) },
+          multipleDriverLicenseDto.data
+        );
+      }
     }
 
     return {
@@ -211,6 +244,9 @@ export class DriverLicenseService {
     if (existing.user.is_active === false) {
       throw new BadRequestException(`Không thể xóa GPLX vì người dùng đã ngưng hoạt động.`);
     }
+    if (existing.email_send_status === EmailSendStatus.FAILED || existing.email_send_status === EmailSendStatus.QUEUED) {
+      throw new BadRequestException(`Không thể xóa GPLX vì email đang bị lỗi hoặc đang trong hàng đợi.`);
+    }
     existing.is_deleted = true;
     await this.driverLicenseRepository.save(existing);
     return { message: 'Giấy phép lái xe đã được xóa' };
@@ -221,6 +257,7 @@ export class DriverLicenseService {
       relations: ['user'],
       where: {
         driver_license_id: In(deleteDriverLicenseDto.driver_license_ids),
+        email_send_status: In([EmailSendStatus.PENDING, EmailSendStatus.SUCCESS]),
         user: {
           is_active: true,
           is_deleted: false,
@@ -312,6 +349,7 @@ export class DriverLicenseService {
       .andWhere('dl.is_active = true')
       .andWhere('u.is_deleted = false')
       .andWhere('u.is_active = true')
+      .andWhere('dl.email_send_status = :emailSendStatus', { emailSendStatus: EmailSendStatus.PENDING })
       .getMany();
 
     for (const item of driverLicenses) {
@@ -324,6 +362,10 @@ export class DriverLicenseService {
           attempts: 3,
           removeOnComplete: true,
         },
+      );
+      await this.driverLicenseRepository.update(
+        { driver_license_id: item.driver_license_id },
+        { email_send_status: EmailSendStatus.QUEUED },
       );
     }
   }

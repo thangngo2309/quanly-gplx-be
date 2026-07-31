@@ -18,6 +18,8 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { TaskModule } from './task/task.module';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { BullModule } from '@nestjs/bull';
+import { NotificationLogModule } from './notification-log/notification-log.module';
+import { NotificationLog } from './notification-log/entities/notification-log.entity';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -30,7 +32,7 @@ import { BullModule } from '@nestjs/bull';
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
-      entities: [User, Car, DriverLicense, VehicleInspection, Settings],
+      entities: [User, Car, DriverLicense, VehicleInspection, Settings, NotificationLog],
       synchronize: true,
     }),
     UserModule,
@@ -59,6 +61,7 @@ import { BullModule } from '@nestjs/bull';
         password: process.env.REDIS_PASSWORD,
       },
     }),
+    NotificationLogModule,
   ],
   controllers: [AppController],
   providers: [AppService],

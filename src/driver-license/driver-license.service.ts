@@ -17,6 +17,9 @@ import type { Queue } from 'bull';
 import { expiryReminderSetting } from '../constant/setting.constant';
 import { EmailSendStatus } from '../enum/email-send-status.enum';
 import dayjs from 'dayjs';
+import { NotificationType } from '../enum/notification-type.enum';
+import { ReferenceType } from '../enum/reference-type.enum';
+import { NotificationLog } from '../notification-log/entities/notification-log.entity';
 
 @Injectable()
 export class DriverLicenseService {
@@ -29,6 +32,8 @@ export class DriverLicenseService {
     private settingsRepository: Repository<Settings>,
     @InjectQueue('send-email')
     private readonly emailQueue: Queue,
+    @InjectRepository(NotificationLog)
+    private notificationLogRepository: Repository<NotificationLog>,
   ) { }
 
   async create(createDriverLicenseDto: CreateDriverLicenseDto) {
@@ -367,6 +372,14 @@ export class DriverLicenseService {
         { driver_license_id: item.driver_license_id },
         { email_send_status: EmailSendStatus.QUEUED },
       );
+
+      await this.notificationLogRepository.save({
+        reference_type: ReferenceType.DRIVER_LICENSE,
+        reference_id: item.driver_license_id,
+        notification_type: NotificationType.EMAIL,
+        user_id: item.user.user_id,
+        recipient: item.user.email,
+      });
     }
   }
 }

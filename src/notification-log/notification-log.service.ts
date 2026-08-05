@@ -35,6 +35,11 @@ export class NotificationLogService {
     if (!driverLicense) {
       throw new BadRequestException('Không tìm thấy giấy phép lái xe');
     }
+
+    if (driverLicense.email_send_status !== EmailSendStatus.FAILED) {
+      throw new BadRequestException('Chỉ có thể gửi lại các thông báo ở trạng thái FAILED.');
+    }
+
     const latestLog = await this.notificationLogRepository.findOne({
       where: {
         reference_type: ReferenceType.DRIVER_LICENSE,

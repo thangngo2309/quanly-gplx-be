@@ -120,8 +120,8 @@ export class NotificationLogService {
         END
       `, 'can_retry')
       .where(`
-        notification_log.send_status != :failedStatus
-        OR latest.max_failed_id = notification_log.notification_log_id
+        (notification_log.send_status != :failedStatus
+        OR latest.max_failed_id = notification_log.notification_log_id)
       `)
       .setParameters({
         ...latestSubQuery.getParameters(),

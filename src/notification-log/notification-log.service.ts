@@ -80,9 +80,50 @@ export class NotificationLogService {
   }
 
   async findAll(pageInputDto: PageInputDto, filterDto: NotificationLogFilterDto) {
+    const latestSubQuery = this.notificationLogRepository
+      .createQueryBuilder('nl')
+      .select('nl.reference_type', 'reference_type')
+      .addSelect('nl.reference_id', 'reference_id')
+      .addSelect('MAX(nl.notification_log_id)', 'max_failed_id')
+      .where('nl.send_status = :failedStatus', { failedStatus: SendStatus.FAILED })
+      .groupBy('nl.reference_type')
+      .addGroupBy('nl.reference_id');
+
     const queryBuilder = this.notificationLogRepository
       .createQueryBuilder('notification_log')
-      .innerJoinAndSelect('notification_log.user', 'u');
+      .innerJoinAndSelect('notification_log.user', 'u')
+      .leftJoin(
+        `(${latestSubQuery.getQuery()})`, 'latest',
+        `
+        latest.reference_type = notification_log.reference_type
+        AND latest.reference_id = notification_log.reference_id
+        `,
+      )
+      .leftJoin(
+        'driver_licenses', 'dl',
+        'dl.driver_license_id = notification_log.reference_id AND notification_log.reference_type = :driverLicenseType',
+      )
+      .addSelect(`
+        CASE 
+          WHEN notification_log.reference_type = :driverLicenseType THEN dl.expiry_date::text 
+        END
+      `, 'expiry_date')
+      .addSelect(`
+        latest.max_failed_id = notification_log.notification_log_id
+        AND CASE 
+          WHEN notification_log.reference_type = :driverLicenseType THEN  dl.email_send_status = :emailFailedStatus
+        END
+      `, 'can_retry')
+      .where(`
+        notification_log.send_status != :failedStatus
+        OR latest.max_failed_id = notification_log.notification_log_id
+      `)
+      .setParameters({
+        ...latestSubQuery.getParameters(),
+        failedStatus: SendStatus.FAILED,
+        emailFailedStatus: EmailSendStatus.FAILED,
+        driverLicenseType: ReferenceType.DRIVER_LICENSE,
+      });
 
     const conditions: { condition: string; params: object }[] = [
       !!filterDto.reference_type && {
@@ -122,11 +163,19 @@ export class NotificationLogService {
       queryBuilder.skip((page - 1) * limit).take(limit);
       const itemCount = await queryBuilder.getCount();
       const result = await queryBuilder.getRawAndEntities();
-      entities = result.entities;
+      entities = result.entities.map((entity, index) => ({
+        ...entity,
+        expiry_date: result.raw[index]?.expiry_date ?? null,
+        can_retry: result.raw[index]?.can_retry ?? false,
+      }));
       pageMetaDto = new PageMetaDto(pageInputDto, itemCount);
     } else {
       const result = await queryBuilder.getRawAndEntities();
-      entities = result.entities;
+      entities = result.entities.map((entity, index) => ({
+        ...entity,
+        expiry_date: result.raw[index]?.expiry_date ?? null,
+        can_retry: result.raw[index]?.can_retry ?? false,
+      }));
       pageMetaDto = new PageMetaDto(new PageInputDto(), entities.length);
     }
     return new PageDto(entities, pageMetaDto);
